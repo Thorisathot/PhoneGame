@@ -856,6 +856,13 @@ h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance}
 .evline span.wk{--eg:255,210,90}
 .evweek{padding:8px 12px;border-radius:12px;border:1px solid rgba(255,210,90,.6);background:rgba(255,190,80,.12);font-size:14px;color:#f1e7d3;text-align:center}.evweek b{color:#ffd27a}
 .evcur{width:16px;height:16px;object-fit:contain;vertical-align:-3px}
+/* minimal in-run buttons */
+#pauseBtn{width:34px;height:34px;top:calc(env(safe-area-inset-top,0px) + 8px);right:calc(env(safe-area-inset-right,0px) + 8px);font-size:12px;opacity:.8;border-radius:10px}
+#rollBtn.act{width:72px;height:72px;right:calc(env(safe-area-inset-right,0px) + 16px);bottom:calc(env(safe-area-inset-bottom,0px) + 24px);opacity:.88}
+#parryBtn.act{width:56px;height:56px;right:calc(env(safe-area-inset-right,0px) + 96px);bottom:calc(env(safe-area-inset-bottom,0px) + 30px);opacity:.88}
+#flaskBtn.act{width:50px;height:50px;right:calc(env(safe-area-inset-right,0px) + 28px);bottom:calc(env(safe-area-inset-bottom,0px) + 108px);opacity:.88}
+.tbtn.act .al{display:none}
+#flaskBtn .cnt{top:-5px;right:-5px;min-width:20px;height:20px;font-size:11px}
 /* browser */
 body.incombat #game{cursor:none}
 .pkeys{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;font-size:13px;color:#a89ec0}
@@ -2806,7 +2813,7 @@ function startRun() {
   TUTS.moved = 0; TUTS.rolled = false; TUTS.drank = false; TUTS.parried = false; TUTS.tried = false; TUTS.cur = null;
   newRun(SAVE.cls); state = 'play'; closeModal(); $('toast').classList.remove('show');
   ['hub', 'endScreen', 'pauseScreen', 'levelScreen', 'chestScreen'].forEach(id => $(id).hidden = true);
-  $('pauseBtn').hidden = false; $('muteBtn').hidden = false;
+  $('pauseBtn').hidden = false; $('muteBtn').hidden = true;
   $('rollBtn').hidden = !isTouch; $('flaskBtn').hidden = $('parryBtn').hidden = !isTouch;
   banner(STAGES[G.stage].name, G.hard ? 'Hard mode. No flask will be refilled.' : 'Survive. Three bells will toll.', 2.6);
 }
@@ -3573,6 +3580,7 @@ function render() {
   }
   c.globalCompositeOperation = 'source-over';
   drawEmissive();
+  drawHeroBars(c);
   c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
   for (const t of G.texts) {
     const life = t.label ? 1.4 : 0.7, k = t.t / life, a = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
@@ -3672,10 +3680,10 @@ function edgeArrow(tx, ty, color, label) {
   const c = ctx, sx = (tx - G.cam.x) * ZOOM + W / 2, sy = (ty - G.cam.y) * ZOOM + H / 2;
   const m = 40; if (sx > m && sx < W - m && sy > m && sy < H - m) return;
   const a = Math.atan2(sy - H / 2, sx - W / 2);
-  const ex = clamp(sx, m, W - m), ey = clamp(sy, W < 640 ? 200 : 130, H - 120);
+  const ex = clamp(sx, m, W - m), ey = clamp(sy, 70, H - (isTouch ? 175 : 50));
   c.save(); c.translate(ex, ey); c.rotate(a); c.fillStyle = color; c.strokeStyle = OUTLINE; c.lineWidth = 2;
   c.beginPath(); c.moveTo(13, 0); c.lineTo(-7, -9); c.lineTo(-2, 0); c.lineTo(-7, 9); c.closePath(); c.stroke(); c.fill(); c.restore();
-  if (label) { c.font = '700 11px Cinzel, Georgia, serif'; c.textAlign = 'center'; c.strokeStyle = 'rgba(0,0,0,0.8)'; c.lineWidth = 3; c.strokeText(label, ex - Math.cos(a) * 24, ey - Math.sin(a) * 24); c.fillStyle = color; c.fillText(label, ex - Math.cos(a) * 24, ey - Math.sin(a) * 24); }
+  if (label) { c.font = "800 10px 'Alegreya Sans', sans-serif"; c.textAlign = 'center'; c.strokeStyle = 'rgba(0,0,0,0.8)'; c.lineWidth = 3; c.strokeText(label, ex - Math.cos(a) * 24, ey - Math.sin(a) * 24); c.fillStyle = color; c.fillText(label, ex - Math.cos(a) * 24, ey - Math.sin(a) * 24); }
 }
 function hudPlate(c, x, y, w, h) {
   const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, 'rgba(26,20,28,0.88)'); g.addColorStop(1, 'rgba(10,8,12,0.88)');
@@ -3692,6 +3700,14 @@ function hudBar(c, x, y, w, h, frac, ghost, top, bottom) {
   c.fillStyle = 'rgba(255,255,255,0.22)'; c.fillRect(x, y, w * clamp(frac, 0, 1), Math.max(1, h * 0.3));
   c.strokeStyle = 'rgba(0,0,0,0.9)'; c.lineWidth = 1; c.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
 }
+function drawHeroBars(c) {
+  if (P.ghost == null || P.ghost < P.hp) P.ghost = P.hp; else P.ghost = Math.max(P.hp, P.ghost - P.maxHp * 0.012);
+  const k = P.hp / P.maxHp, w = 38, x = P.x - w / 2, y = P.y + 16, low = k < 0.35 && Math.sin(performance.now() / 150) > 0;
+  c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(x - 1, y - 1, w + 2, 6);
+  if (P.ghost > P.hp) { c.fillStyle = 'rgba(255,230,170,0.75)'; c.fillRect(x, y, w * P.ghost / P.maxHp, 4); }
+  c.fillStyle = low ? '#ff9a8a' : k < 0.35 ? '#ff3a3a' : '#5ae070'; c.fillRect(x, y, w * k, 4);
+  if (P.stam < P.maxStam) { c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(x - 1, y + 5, w + 2, 3); c.fillStyle = '#ffd860'; c.fillRect(x, y + 5.5, w * P.stam / P.maxStam, 2); }
+}
 function drawHUD() {
   const c = ctx; c.setTransform(DPR, 0, 0, DPR, 0, 0);
   const hpk = P.hp / P.maxHp;
@@ -3701,92 +3717,59 @@ function drawHUD() {
   if (G.flameF) edgeArrow(G.flameF.x, G.flameF.y, G.flameF.fuel < 25 ? '#ff6a4a' : '#ffb060', 'VIGIL');
   for (const ch of G.chests) edgeArrow(ch.x, ch.y, '#d9b064', 'RELIQUARY');
   if (G.boss) edgeArrow(G.boss.x, G.boss.y, '#e0404a', '');
-  // XP bar
+  // ---- minimal HUD: everything hugs the top edge; health lives under the hero ----
+  const UF = "'Alegreya Sans', 'Segoe UI', sans-serif", phone = W < 640;
   const xk = clamp(P.xp / P.xpNext, 0, 1);
-  c.fillStyle = 'rgba(8,6,10,0.92)'; c.fillRect(0, 0, W, 9);
-  const xg = c.createLinearGradient(0, 0, W * xk, 0); xg.addColorStop(0, '#7a2e10'); xg.addColorStop(1, '#ffa050');
-  c.fillStyle = xg; c.fillRect(0, 0, W * xk, 8);
-  c.fillStyle = 'rgba(255,230,180,0.6)'; c.fillRect(0, 1, W * xk, 1.5);
-  c.fillStyle = 'rgba(217,176,100,0.6)'; c.fillRect(0, 8, W, 1);
-  c.globalCompositeOperation = 'lighter'; glowAt(c, W * xk, 4, 18, '255,180,90', 0.6); c.globalCompositeOperation = 'source-over';
-  // timer plate
-  const pw = 168; hudPlate(c, W / 2 - pw / 2, 16, pw, 58);
-  c.textAlign = 'center'; c.textBaseline = 'top';
-  c.font = "900 30px 'Alegreya Sans', sans-serif"; c.fillStyle = '#fff4dc'; c.fillText(fmtTime(G.mode ? Math.max(0, G.dun.lim - G.t) : G.t), W / 2, 20);
-  c.font = "800 13px 'Alegreya Sans', sans-serif"; c.fillStyle = '#d8cfe8';
-  c.fillText(fmtNum(G.kills) + ' slain', W / 2 - 34, 53);
-  c.fillStyle = '#e8c779'; c.fillText(fmtNum(G.gold) + ' gold', W / 2 + 38, 53);
-  if (G.flameF) { const fk = G.flameF.fuel / 100, mw = 140, mx = W / 2 - mw / 2 + 10, my = 80;
-    if (IMG.cur_ember) c.drawImage(IMG.cur_ember, mx - 22, my - 6, 14, 14 * IMG.cur_ember.height / IMG.cur_ember.width);
-    hudBar(c, mx, my, mw, 7, fk, 0, fk < 0.25 ? '#ff5a3a' : '#ffc060', '#a0400c');
-    if (fk < 0.25 && Math.sin(performance.now() / 140) > 0) { c.strokeStyle = 'rgba(255,90,60,0.95)'; c.lineWidth = 1.5; c.strokeRect(mx - 2, my - 2, mw + 4, 11); } }
+  c.fillStyle = 'rgba(8,6,12,0.55)'; c.fillRect(0, 0, W, 4);
+  c.fillStyle = '#ffb050'; c.fillRect(0, 0, W * xk, 4);
+  c.globalCompositeOperation = 'lighter'; glowAt(c, W * xk, 2, 10, '255,180,90', 0.5); c.globalCompositeOperation = 'source-over';
+  const txt = (s, x, y, size, col, w = 800, align = 'center') => { c.font = `${w} ${size}px ${UF}`; c.textAlign = align; c.lineWidth = Math.max(2.5, size / 5); c.strokeStyle = 'rgba(0,0,0,0.75)'; c.strokeText(s, x, y); c.fillStyle = col; c.fillText(s, x, y); };
+  c.textBaseline = 'middle'; c.lineJoin = 'round';
+  // timer, with kills and gold in small print
+  txt(fmtTime(G.mode ? Math.max(0, G.dun.lim - G.t) : G.t), W / 2, 22, phone ? 22 : 24, '#fff4dc', 900);
+  c.font = `800 11px ${UF}`; const kT = fmtNum(G.kills), gT = fmtNum(Math.floor(G.gold)), kw = c.measureText(kT).width, gw = c.measureText(gT).width, row = 41, gap2 = 10, tot = 12 + kw + gap2 + 12 + gw, sx0 = W / 2 - tot / 2;
+  if (IMG.icon_w_blade) c.drawImage(IMG.icon_w_blade, sx0, row - 6, 11, 11);
+  txt(kT, sx0 + 13, row, 11, '#e4dcf0', 800, 'left');
+  if (IMG.cur_gold) c.drawImage(IMG.cur_gold, sx0 + 13 + kw + gap2, row - 6, 11, 11);
+  txt(gT, sx0 + 26 + kw + gap2, row, 11, '#ffd77a', 800, 'left');
+  // vigil flame: a slim meter under the counters
+  if (G.flameF) { const fk = G.flameF.fuel / 100, mw = 64, mx = W / 2 - mw / 2, my = 51, low = fk < 0.25;
+    c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(mx - 1, my - 1, mw + 2, 5);
+    c.fillStyle = low ? (Math.sin(performance.now() / 140) > 0 ? '#ff4a2a' : '#ff9a6a') : '#ffb84a'; c.fillRect(mx, my, mw * fk, 3); }
   const nextBell = BOSS_TIMES[G.bossIdx];
+  const pill = (s, col, y) => { c.font = `800 11px ${UF}`; const w2 = c.measureText(s).width + 18; c.fillStyle = 'rgba(10,6,16,0.55)'; c.beginPath(); c.roundRect(W / 2 - w2 / 2, y - 9, w2, 18, 9); c.fill(); txt(s, W / 2, y + 0.5, 11, col); };
   if (G.mode) drawDunHud(c);
   else if (G.horde) {
-    const left = Math.max(0, G.horde.dur - G.horde.t), hw = 200, hx = W / 2 - hw / 2, hy = W < 640 ? 200 : 96;
-    c.font = '700 13px Cinzel, Georgia, serif'; c.fillStyle = Math.sin(performance.now() / 160) > 0 ? '#ff6a4a' : '#ffb08a';
-    c.fillText('THE HORDE COVETS YOUR LIGHT', W / 2, hy);
-    hudBar(c, hx, hy + 18, hw, 6, left / G.horde.dur, 0, '#ff5a3a', '#7a1408');
-  } else if (nextBell && !G.boss) { c.font = "italic 700 14px 'Alegreya Sans', sans-serif"; c.fillStyle = nextBell - G.t < 20 ? '#ff7a5a' : '#958a9c'; c.fillText('The bell tolls in ' + fmtTime(nextBell - G.t), W / 2, 98); }
-  // inventory: rounded tiles with level pips
-  const UF = "'Alegreya Sans', 'Segoe UI', sans-serif";
-  c.textAlign = 'left';
-  const phone = W < 640, ts = phone ? 30 : 32, gap = ts + 6, ix = 12, iy = phone ? 108 : 14;
-  const rr = (x0, y0, w0, h0, r0) => { c.beginPath(); c.roundRect(x0, y0, w0, h0, r0); };
-  c.save(); c.translate(ix + 16, iy + 15); c.rotate(Math.PI / 4); c.fillStyle = '#3a1e0c'; c.fillRect(-13, -13, 26, 26); c.strokeStyle = '#ffd27a'; c.lineWidth = 2; c.strokeRect(-13, -13, 26, 26); c.restore();
-  c.font = `900 15px ${UF}`; c.fillStyle = '#ffe9b0'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(P.lv, ix + 16, iy + 16);
-  let x = ix + 42;
-  const tile = (color, lv, evo, y, icon, glyph) => {
-    rr(x, y, ts, ts, 8); c.fillStyle = 'rgba(16,10,26,0.88)'; c.fill();
-    c.lineWidth = evo ? 2.5 : 1.6; c.strokeStyle = evo ? '#ffd27a' : color; c.stroke();
-    if (icon && IMG[icon]) { const im = IMG[icon], s0 = ts - 4, hh = s0 * Math.min(1, im.height / im.width); c.drawImage(im, x + 2, y + (ts - hh) / 2, s0, hh); }
-    else { c.font = `900 13px ${UF}`; c.fillStyle = color; c.textAlign = 'center'; c.fillText(glyph, x + ts / 2, y + ts / 2); }
-    if (!evo) for (let i = 0; i < 5; i++) { c.fillStyle = i < lv ? color : 'rgba(255,255,255,0.16)'; rr(x + 2 + i * ((ts - 4) / 5), y + ts + 2, (ts - 4) / 5 - 1.5, 3.5, 1.5); c.fill(); }
-    else { c.fillStyle = '#ffd27a'; rr(x + 2, y + ts + 2, ts - 4, 3.5, 1.5); c.fill(); }
-    x += gap;
-  };
-  const emptySlot = y => { rr(x, y, ts, ts, 8); c.fillStyle = 'rgba(12,8,20,0.5)'; c.fill(); c.setLineDash([3, 3]); c.strokeStyle = 'rgba(217,176,100,0.32)'; c.lineWidth = 1; c.stroke(); c.setLineDash([]); x += gap; };
-  for (const w of P.weapons) tile(WEAPONS[w.id].color, w.lv, w.evo, iy, 'icon_w_' + w.id, WEAPONS[w.id].glyph);
-  for (let i = P.weapons.length; i < MAX_W; i++) emptySlot(iy);
-  x = ix + 42;
-  for (const id in P.passives) tile(PASSIVES[id].color, P.passives[id], false, iy + ts + 10, 'icon_p_' + id, PASSIVES[id].glyph);
-  for (let i = Object.keys(P.passives).length; i < MAX_R; i++) emptySlot(iy + ts + 10);
-  c.textBaseline = 'alphabetic'; c.textAlign = 'left';
-  // health panel: framed portrait, chunky bars with numbers inside
-  if (P.ghost == null || P.ghost < P.hp) P.ghost = P.hp; else P.ghost = Math.max(P.hp, P.ghost - P.maxHp * 0.012);
-  const pr = phone ? 25 : 28, bw = Math.min(phone ? 150 : 240, W * 0.42), px = 14 + pr, py = H - 16 - pr, bx = px + pr + 10, by = py - pr + 6;
-  rr(12, py - pr - 6, pr * 2 + bw + 26, pr * 2 + 12, 18); c.fillStyle = 'rgba(20,12,32,0.86)'; c.fill(); c.strokeStyle = 'rgba(217,176,100,0.55)'; c.lineWidth = 1.5; c.stroke();
-  const him = IMG['hero_' + P.cls];
-  c.save(); c.beginPath(); c.arc(px, py, pr, 0, TAU); c.fillStyle = '#2a1a3a'; c.fill(); c.clip();
-  if (him) { const sw0 = him.width * 0.5; c.drawImage(him, him.width * 0.22, 0, sw0, sw0, px - pr, py - pr, pr * 2, pr * 2); }
-  c.restore();
-  c.beginPath(); c.arc(px, py, pr, 0, TAU); c.lineWidth = 3; c.strokeStyle = hpk < 0.35 ? '#ff5a4a' : '#ffd27a'; c.stroke();
-  const bh = phone ? 15 : 17;
-  hudBar(c, bx, by, bw, bh, hpk, P.ghost / P.maxHp, '#ff4a50', '#8a0c18');
-  c.font = `800 ${phone ? 12 : 13}px ${UF}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.85)';
-  const hpT = Math.ceil(P.hp) + ' / ' + P.maxHp; c.strokeText(hpT, bx + bw / 2, by + bh / 2 + 1); c.fillStyle = '#fff'; c.fillText(hpT, bx + bw / 2, by + bh / 2 + 1);
-  const sw = Math.min(bw, bw * 0.75 * (P.maxStam / 100));
-  hudBar(c, bx, by + bh + 4, sw, 5, P.stam / P.maxStam, 0, '#9ae060', '#3a6a20');
-  c.textAlign = 'left';
-  for (let i = 0; i < P.maxFlasks; i++) {
-    const fx = bx + 7 + i * 17, fy = by + bh + 19, full = i < P.flasks;
-    c.fillStyle = full ? '#ff9a4a' : 'rgba(255,255,255,0.14)'; circle(c, fx, fy, 6); c.lineWidth = 1.5; c.strokeStyle = full ? '#ffe0b0' : 'rgba(255,255,255,0.2)'; c.stroke();
-    if (full) { c.fillStyle = 'rgba(255,255,255,0.7)'; circle(c, fx - 2, fy - 2, 1.8); }
+    const left = Math.max(0, G.horde.dur - G.horde.t);
+    pill('THE HORDE COVETS YOUR LIGHT · ' + Math.ceil(left) + 's', Math.sin(performance.now() / 160) > 0 ? '#ff7a5a' : '#ffc0a0', 68);
+  } else if (nextBell && !G.boss && nextBell - G.t < 45) pill('The bell tolls in ' + Math.ceil(nextBell - G.t) + 's', nextBell - G.t < 15 ? '#ff7a5a' : '#d8cfe8', 68);
+  // level and weapons: small icons top-left, no frames
+  const ix = 10, iy = 12, isz = phone ? 22 : 24;
+  c.beginPath(); c.arc(ix + 11, iy + 11, 11, 0, TAU); c.fillStyle = 'rgba(40,20,8,0.85)'; c.fill(); c.lineWidth = 1.5; c.strokeStyle = '#ffd27a'; c.stroke();
+  txt(P.lv, ix + 11, iy + 11.5, 11, '#ffe9b0', 900);
+  let x = ix + 28;
+  for (const w of P.weapons) {
+    const icon = 'icon_w_' + w.id, im = IMG[icon], col = w.evo ? '#ffd27a' : WEAPONS[w.id].color;
+    if (im) c.drawImage(im, x, iy - 1, isz, isz * Math.min(1, im.height / im.width)); else txt(WEAPONS[w.id].glyph, x + isz / 2, iy + 10, 12, col, 900);
+    if (w.evo) { c.fillStyle = '#ffd27a'; c.fillRect(x + 2, iy + isz + 1, isz - 4, 2); }
+    else for (let i = 0; i < 5; i++) { c.fillStyle = i < w.lv ? col : 'rgba(255,255,255,0.2)'; c.fillRect(x + 1 + i * (isz / 5), iy + isz + 1, isz / 5 - 1.5, 2); }
+    x += isz + 5;
   }
-  if (!isTouch) { c.fillStyle = '#b8aed0'; c.font = `700 12px ${UF}`; c.fillText('Q', bx + 8 + P.maxFlasks * 17, by + bh + 20); }
-  if (G.revives > 0) { c.fillStyle = '#ffd27a'; c.font = `800 11px ${UF}`; c.textAlign = 'right'; c.fillText('REBIRTH ×' + G.revives, bx + bw, by + bh + 20); c.textAlign = 'left'; }
-  c.textBaseline = 'alphabetic';
+  // flasks for keyboard players (touch players see them on the Flask button)
+  if (!isTouch) { c.textBaseline = 'middle'; for (let i = 0; i < P.maxFlasks; i++) { const full = i < P.flasks; c.fillStyle = full ? '#ff9a4a' : 'rgba(255,255,255,0.18)'; circle(c, 18 + i * 13, H - 18, 4.5); } txt('Q', 18 + P.maxFlasks * 13 + 2, H - 17.5, 11, '#b8aed0', 800, 'left'); }
+  if (G.revives > 0) txt('REBIRTH ×' + G.revives, W - 14, H - 16, 11, '#ffd27a', 800, 'right');
+  c.textBaseline = 'alphabetic'; c.textAlign = 'left';
   // boss bar
   if (G.boss) {
-    const b = G.boss, ww = Math.min(620, W - 40), x0 = (W - ww) / 2, y0 = isTouch ? (W < 640 ? 214 : 124) : H - 48;
+    const b = G.boss, ww = Math.min(360, W - 110), x0 = (W - ww) / 2, y0 = 72;
     if (b.ghost == null || b.ghost < b.hp) b.ghost = b.hp; else b.ghost = Math.max(b.hp, b.ghost - b.maxHp * 0.004);
-    c.textAlign = 'center'; c.font = '700 18px Cinzel, Georgia, serif'; c.strokeStyle = 'rgba(0,0,0,0.85)'; c.lineWidth = 4;
-    c.strokeText(b.name, W / 2, y0 - 10); c.fillStyle = '#f1e7d3'; c.fillText(b.name, W / 2, y0 - 10); c.textAlign = 'left';
-    hudBar(c, x0, y0, ww, 9, Math.max(0, b.hp / b.maxHp), b.ghost / b.maxHp, '#c8202c', '#5a0810');
-    c.strokeStyle = 'rgba(217,176,100,0.55)'; c.strokeRect(x0 - 3.5, y0 - 3.5, ww + 7, 16);
+    c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.font = "800 12px 'Alegreya Sans', sans-serif"; c.strokeStyle = 'rgba(0,0,0,0.8)'; c.lineWidth = 3;
+    c.strokeText(b.name, W / 2, y0 - 5); c.fillStyle = '#f1e7d3'; c.fillText(b.name, W / 2, y0 - 5);
+    if (G.mode !== 'wboss') { c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(x0 - 1, y0 - 1, ww + 2, 7); if (b.ghost > b.hp) { c.fillStyle = 'rgba(255,220,160,0.7)'; c.fillRect(x0, y0, ww * b.ghost / b.maxHp, 5); } c.fillStyle = '#e0303c'; c.fillRect(x0, y0, ww * Math.max(0, b.hp / b.maxHp), 5); }
     const pk = Math.min(1, (b.posture || 0) / 100), pw = ww * 0.5, px0 = W / 2 - pw / 2;
-    hudBar(c, px0, y0 + 17, pw, 5, pk, 0, b.broken > 0 ? '#fff6c0' : '#ffd060', '#a06a10');
-    if (b.broken > 0) { c.textAlign = 'center'; c.font = '900 13px Cinzel, Georgia, serif'; c.fillStyle = '#fff2b0'; c.fillText('BROKEN', W / 2, y0 + 36); c.textAlign = 'left'; }
+    c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(px0 - 1, y0 + 8, pw + 2, 4); c.fillStyle = b.broken > 0 ? '#fff6c0' : '#ffd060'; c.fillRect(px0, y0 + 9, pw * pk, 2);
+    if (b.broken > 0) { c.font = "900 12px 'Alegreya Sans', sans-serif"; c.strokeText('BROKEN', W / 2, y0 + 26); c.fillStyle = '#fff2b0'; c.fillText('BROKEN', W / 2, y0 + 26); }
+    c.textAlign = 'left';
   }
   if (touch.active) {
     c.strokeStyle = 'rgba(241,231,211,0.3)'; c.lineWidth = 2; c.beginPath(); c.arc(touch.ox, touch.oy, 50, 0, TAU); c.stroke();
@@ -4181,7 +4164,7 @@ function startDungeon(id, tier) {
   if (id === 'sigil') { G.crystal = { x: 0, y: 0, hp: 100, max: 100, r: 24, hit: 0 }; P.y = 70; G.cam.y = 70; }
   state = 'play'; closeModal(); $('toast').classList.remove('show');
   ['hub', 'endScreen', 'pauseScreen', 'levelScreen', 'chestScreen'].forEach(x => $(x).hidden = true);
-  $('pauseBtn').hidden = false; $('muteBtn').hidden = false;
+  $('pauseBtn').hidden = false; $('muteBtn').hidden = true;
   $('rollBtn').hidden = !isTouch; $('flaskBtn').hidden = $('parryBtn').hidden = !isTouch;
   banner(d.name + ' · Tier ' + tier, d.goal, 2.6);
 }
@@ -4301,12 +4284,19 @@ function drawCrystal() {
   c.strokeStyle = k > 0.5 ? '#c8a0ff' : k > 0.25 ? '#ffb060' : '#ff5a4a'; c.beginPath(); c.ellipse(C.x, C.y + 10, 40, 14, 0, -Math.PI / 2, -Math.PI / 2 + TAU * k); c.stroke();
 }
 function drawDunHud(c) {
-  const D = G.dun, y = 96; c.textAlign = 'center'; c.font = '700 13px Cinzel, Georgia, serif'; c.fillStyle = '#f1d38e';
-  if (G.mode === 'gold') c.fillText('Gilded slain ' + D.kills + ' / 15 · ' + fmtNum(Math.round(D.gold)) + ' gold', W / 2, y);
-  else if (G.mode === 'sigil') { c.fillText('Crystal ' + Math.round(G.crystal.hp) + '% · Wave ' + D.wave, W / 2, y); hudBar(c, W / 2 - 100, y + 18, 200, 6, G.crystal.hp / G.crystal.max, 0, '#c8a0ff', '#4a2a8a'); }
-  else if (G.mode === 'fam' && !D.mother) c.fillText('The Den Mother stirs...', W / 2, y);
-  else if (G.mode === 'wboss') c.fillText('Damage dealt ' + fmtNum(Math.round(D.wdmg || 0)), W / 2, y);
-  else if (G.mode === 'trial') c.fillText('Bell ' + Math.min(3, D.bossN + 1) + ' of 3', W / 2, y);
+  const D = G.dun, y = G.boss ? 112 : 68, UF = "'Alegreya Sans', sans-serif";
+  let t = '';
+  if (G.mode === 'gold') t = 'Gilded slain ' + D.kills + ' / 15 · ' + fmtNum(Math.round(D.gold)) + ' gold';
+  else if (G.mode === 'sigil') t = 'Crystal ' + Math.round(G.crystal.hp) + '% · Wave ' + D.wave;
+  else if (G.mode === 'fam' && !D.mother) t = 'The Den Mother stirs...';
+  else if (G.mode === 'wboss') t = 'Damage dealt ' + fmtNum(Math.round(D.wdmg || 0));
+  else if (G.mode === 'trial') t = 'Bell ' + Math.min(3, D.bossN + 1) + ' of 3';
+  if (!t) return;
+  c.font = `800 11px ${UF}`; c.textAlign = 'center'; c.textBaseline = 'middle'; const w = c.measureText(t).width + 18;
+  c.fillStyle = 'rgba(10,6,16,0.55)'; c.beginPath(); c.roundRect(W / 2 - w / 2, y - 9, w, 18, 9); c.fill();
+  c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.75)'; c.strokeText(t, W / 2, y + 0.5); c.fillStyle = '#ffe08a'; c.fillText(t, W / 2, y + 0.5);
+  if (G.mode === 'sigil') { const k = G.crystal.hp / G.crystal.max; c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(W / 2 - 40, y + 11, 80, 4); c.fillStyle = '#c8a0ff'; c.fillRect(W / 2 - 40, y + 11.5, 80 * k, 3); }
+  c.textBaseline = 'alphabetic';
 }
 
 /* ---------------- Live events: a yearly calendar, weekend twists, remote overrides ---------------- */
