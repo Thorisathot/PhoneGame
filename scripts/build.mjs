@@ -22,4 +22,8 @@ ${body}
 mkdirSync(join(root, 'www'), { recursive: true });
 writeFileSync(join(root, 'www', 'index.html'), html);
 if (existsSync(join(root, 'assets'))) cpSync(join(root, 'assets'), join(root, 'www', 'assets'), { recursive: true });
+
+// Firebase (realms, cloud save, guilds) is bundled so the app does not depend on a CDN
+const fbDir = join(root, 'node_modules', 'firebase');
+if (existsSync(fbDir)) { mkdirSync(join(join(root, 'www'), 'vendor'), { recursive: true }); for (const n of ['app', 'auth', 'firestore']) cpSync(join(fbDir, 'firebase-' + n + '-compat.js'), join(join(root, 'www'), 'vendor', 'firebase-' + n + '-compat.js')); }
 console.log('Built www/index.html (' + Math.round(html.length / 1024) + ' KB)');

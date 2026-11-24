@@ -808,6 +808,27 @@ h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance}
 .hardtog[aria-pressed="true"] b{color:#ff9a8a}
 .hardtog[hidden]{display:none}
 @media (max-width:640px){.hardtog{margin-top:6px;padding:6px 12px 6px 8px}.hardtog small{display:none}.hardtog .hk{width:36px;height:20px}.hardtog .hk i{width:12px;height:12px}.hardtog[aria-pressed="true"] .hk i{left:18px}.stagewpn em{display:none}.stagewpn{padding:6px 12px;margin-bottom:6px}.stagewpn img{width:36px;height:36px}}
+/* realms */
+.rtabs{grid-template-columns:repeat(4,1fr)!important;width:100%!important;margin-bottom:10px}.rtabs button{font-size:12px!important;letter-spacing:.06em!important;padding:9px 4px!important}
+.realmbody{display:flex;flex-direction:column;gap:8px;min-height:200px}
+.rksel{width:100%;padding:10px;border-radius:12px;background:#221a38;color:#f1e7d3;border:2px solid #4a3e70;font:inherit;font-size:15px}
+.rklist{display:flex;flex-direction:column;gap:5px;max-height:320px;overflow-y:auto}
+.rkrow{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:12px;background:rgba(10,6,20,.45);border:1px solid rgba(255,255,255,.07)}
+.rkrow.me{border-color:#ffd27a;background:rgba(255,190,90,.12)}
+.rkrow img{width:30px;height:30px;border-radius:8px;object-fit:cover}
+.rkrow span{flex:1;min-width:0;text-align:left;font-size:15px;color:#f1e7d3;overflow:hidden;text-overflow:ellipsis}.rkrow span i{font-style:normal;color:#ffc04a;font-size:12px}
+.rkrow em{font-style:normal;font-family:var(--display);color:#ffd27a;font-size:14px}
+.rkrow .btn{padding:6px 10px;font-size:11px}
+.rkn{min-width:24px;font-family:var(--display);color:#b8aed0;text-align:center}
+.wbhead{display:flex;align-items:center;gap:12px}.wbhead img{width:78px;height:78px;object-fit:contain;flex:none}.wbhead h3{margin:0;color:#f1e7d3}.wbhead p{margin:2px 0 0;font-size:14px}
+.wbbar i{background:linear-gradient(90deg,#8a1020,#ff5a3a)}
+.gbadge{width:64px;height:64px;flex:none;display:grid;place-items:center;border-radius:16px;background:linear-gradient(160deg,#6a54b8,#2a2048);border:2px solid #ffd27a;font-family:var(--display);font-weight:900;color:#ffd27a;font-size:18px}
+.gcreate{display:flex;gap:6px;flex-wrap:wrap}.gcreate input,.gsay input{flex:1;min-width:90px;padding:10px;border-radius:12px;background:#221a38;color:#f1e7d3;border:2px solid #4a3e70;font:inherit;font-size:15px}
+.gcreate #gTag{flex:0 0 72px;min-width:0;text-transform:uppercase}
+.gchat{height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding:8px;border-radius:12px;background:rgba(10,6,20,.55);border:1px solid #3f3460;text-align:left}
+.gmsg{font-size:14px;color:#e8e0f4;line-height:1.3;cursor:pointer}.gmsg b{color:#ffc04a;margin-right:4px}.gmsg.me b{color:#9fd6ff}
+.gsay{display:flex;gap:6px}.gsay .btn{padding:10px 16px}
+.gact{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;background:#2a2048}.gact span{color:#f1e7d3;font-size:14px}.gact .btn{padding:6px 10px;font-size:12px}
 /* browser */
 body.incombat #game{cursor:none}
 .pkeys{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;font-size:13px;color:#a89ec0}
@@ -1562,7 +1583,7 @@ function loadSave() {
 }
 let SAVE = loadSave();
 migrateSave();
-function persist() { store.set(SAVE_KEY, SAVE); }
+function persist() { SAVE.ts = Date.now(); store.set(SAVE_KEY, SAVE); try { Online.queueSave(); } catch (e) {} }
 zoomPref = ZOOM_PREFS[SAVE.settings.zoom] || 1; resize();
 const itemById = id => SAVE.items.find(i => i.id === id) || null;
 const isEquipped = it => SAVE.equipped[it.slot] === it.id;
@@ -1688,7 +1709,7 @@ function newRun(cls) {
   G.flameF = { x: 0, y: -110, fuel: 100, t: 0 };
   G.stage = SAVE.stage; G.meta = metaMods(); G.gold = 0; G.sigils = 0; G.revives = G.meta.revive; G.rerolls = G.meta.reroll;
   G.hard = !!SAVE.hard;
-  G.goldMul = (1 + G.meta.gold) * STAGES[G.stage].gold * (G.hard ? 1.5 : 1);
+  G.goldMul = (1 + G.meta.gold) * STAGES[G.stage].gold * (G.hard ? 1.5 : 1) * (1 + 0.01 * (SAVE.guildId ? SAVE.guildLv || 0 : 0));
   P.rollCd = 0;
   const wi = itemById(SAVE.equipped.wings), fi = itemById(SAVE.equipped.familiar);
   G.wingsR = wi ? wi.r : -1; G.famR = fi ? fi.r : -1; G.fam = fi ? { x: 0, y: -30, t: 0, cd: 1 } : null;
@@ -1762,6 +1783,7 @@ function damageEnemy(e, dmg, kx = 0, ky = 0) {
   const crit = Math.random() < 0.08 + (P.crit || 0);
   dmg *= P.might * (0.9 + Math.random() * 0.2) * (crit ? 1.8 : 1) * (e.broken > 0 ? 2.5 : 1) * (e.vuln > G.t ? 1.5 : 1) * 1.3;
   e.hp -= dmg; e.flash = 0.08; G.dmgDealt += dmg;
+  if (G.mode === 'wboss' && e.boss) G.dun.wdmg = (G.dun.wdmg || 0) + dmg;
   if (!e.boss) { const m = 1 / e.mass; e.kbx += kx * m; e.kby += ky * m; }
   if (G.texts.length < 90) G.texts.push({ x: e.x + rand(-6, 6), y: e.y - e.r - 6, v: Math.round(dmg), t: 0, big: dmg > 60, crit });
   if (G.parts.length < 520) for (let i = 0; i < (crit ? 5 : 2); i++) { const a = Math.random() * TAU, sp = rand(60, 180); G.parts.push({ x: e.x, y: e.y - 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, t: 0, life: 0.18, c: crit ? 'rgba(255,190,90,1)' : 'rgba(255,240,210,0.9)', s: 1.3, glow: true }); }
@@ -2661,7 +2683,7 @@ function endRun(won) {
   ensureProfile(); SAVE.stats.kills += G.kills; SAVE.stats.bosses += G.bossesKilled; SAVE.stats.time += Math.floor(G.t); if (won) SAVE.stats.wins++;
   SAVE.urn = Math.min(URN.cap, (SAVE.urn || 0) + Math.floor(G.kills / 120) + G.bossesKilled * 5 + (won ? 15 : 0));
   const feathers = Math.round((G.hordesBroken * 3 + G.bossesKilled * 2 + (won ? 6 : 0)) * (G.hard ? 1.5 : 1)); addFeathers(feathers);
-  const xp = runXp(won), lvl = grantPlayerXp(xp); persist();
+  const xp = runXp(won), lvl = grantPlayerXp(xp); persist(); try { Online.pushScore(); } catch (e) {}
   G.reward = { gold, sig, xp, lvl, feathers };
   setTimeout(() => {
     $('endTitle').textContent = (won ? 'VIGIL KEPT' : 'YOU HAVE FALLEN') + (G.hard ? ' \u00b7 HARD' : '');
@@ -3921,6 +3943,8 @@ const DUNGEONS = [
     desc: 'Three bosses, back to back, with no rest between. Win a reliquary of gear.', goal: 'Defeat all three bosses in time.' },
 ];
 const DUN = Object.fromEntries(DUNGEONS.map(d => [d.id, d]));
+// the realm's weekly world boss is fought like a dungeon: 90 seconds to deal as much damage as possible
+DUN.wboss = { id: 'wboss', name: 'World boss', tag: 'Realm event', lim: 90, stage: 3, col: '#e0404a', goal: 'Deal as much damage as you can before time runs out.' };
 function dunSave() {
   SAVE.dun = SAVE.dun || { day: '', used: {}, clear: {}, sel: {} };
   if (SAVE.dun.day !== todayKey()) { SAVE.dun.day = todayKey(); SAVE.dun.used = {}; }
@@ -4019,8 +4043,8 @@ function dunDirector(dt) {
   const D = G.dun, t = G.t;
   if (D.done) return;
   if (D.win > 0) { D.win -= dt; if (D.win <= 0) finishDungeon(true); return; }
-  if (t >= D.lim) { finishDungeon(G.mode === 'gold' || (G.mode === 'sigil' && G.crystal.hp > 0)); return; }
-  const trickle = G.mode === 'gold' ? 1.0 + t / 45 : G.mode === 'sigil' ? 0.4 + t / 60 : G.mode === 'fam' ? 2.4 + t / 25 : 0.7;
+  if (t >= D.lim) { finishDungeon(G.mode === 'gold' || G.mode === 'wboss' || (G.mode === 'sigil' && G.crystal.hp > 0)); return; }
+  const trickle = G.mode === 'wboss' ? 0.9 + t / 60 : G.mode === 'gold' ? 1.0 + t / 45 : G.mode === 'sigil' ? 0.4 + t / 60 : G.mode === 'fam' ? 2.4 + t / 25 : 0.7;
   G.spawnAcc += trickle * dt;
   while (G.spawnAcc >= 1) { G.spawnAcc -= 1; if (G.enemies.length < 240) { const [x, y] = spawnPoint(); const e = spawnEnemy(G.mode === 'fam' ? (Math.random() < 0.6 ? 'rat' : dunType()) : dunType(), x, y); if (G.mode === 'sigil') e.toC = true; } }
   D.next -= dt;
@@ -4054,6 +4078,8 @@ function dunDirector(dt) {
     }
   } else if (G.mode === 'fam') {
     if (!D.mother && t >= 20) { D.mother = 1; dunBoss(1, 'The Den Mother', 0.5); }
+  } else if (G.mode === 'wboss') {
+    if (!D.started) { D.started = 1; const k = wbKind(isoWeek()); dunBoss(k.i, k.name, 1); G.boss.hp = G.boss.maxHp = 1e12; }
   } else if (G.mode === 'trial') {
     if (D.bossN === 0 && !G.boss && !D.started) { D.started = 1; dunBoss(0, 'The First Bell', 0.45); }
     if (D.nextBoss && t >= D.nextBoss && !G.boss) { D.nextBoss = 0; dunBoss(D.bossN, D.bossN === 1 ? 'The Second Bell' : 'The Last Bell', 0.45); }
@@ -4065,7 +4091,8 @@ function finishDungeon(won) {
   state = won ? 'win' : 'dead'; hideCoach(); if (won) SND.chest(); else SND.death();
   bannerTimer = 0; $('banner').classList.remove('show');
   const d = DUN[G.mode], t = D.tier, R = {}, ds = dunSave(); let title, sub, cleared = false, extra = '';
-  if (G.mode === 'gold') { R.gold = Math.round(D.gold); cleared = D.kills >= 15; title = 'VAULT PLUNDERED'; sub = D.kills + ' gilded thralls slain' + (cleared ? '. The next tier opens.' : '. Slay 15 to clear the tier.'); won = true; }
+  if (G.mode === 'wboss') { const dm = Math.round(D.wdmg || 0); R.gold = Math.min(600, 40 + Math.round(dm / 200)); won = true; title = 'BLOWS STRUCK'; sub = fmtNum(dm) + ' damage dealt for your realm.'; try { Online.hitBoss(dm); } catch (e) {} }
+  else if (G.mode === 'gold') { R.gold = Math.round(D.gold); cleared = D.kills >= 15; title = 'VAULT PLUNDERED'; sub = D.kills + ' gilded thralls slain' + (cleared ? '. The next tier opens.' : '. Slay 15 to clear the tier.'); won = true; }
   else if (G.mode === 'sigil') { const k = G.crystal.hp / G.crystal.max; R.sigils = k > 0 ? Math.max(1, Math.round(crystalSigils(t) * (0.4 + 0.6 * k))) : 0; cleared = k >= 0.5; title = k > 0 ? 'CRYSTAL HELD' : 'CRYSTAL SHATTERED'; sub = k > 0 ? 'The crystal stands at ' + Math.round(k * 100) + '%.' : 'Nothing could be salvaged.'; }
   else if (G.mode === 'fam') {
     if (won) { const it = genItem(rollFam(t), 'familiar'); SAVE.items.push(it); cleared = true; title = 'EGG CLAIMED'; sub = 'A ' + RARITY[it.r].name.toLowerCase() + ' familiar hatched: ' + it.name + '.';
@@ -4076,7 +4103,7 @@ function finishDungeon(won) {
     else { title = 'THE BELLS TOLL FOR YOU'; sub = 'The trial is not yet won.'; }
   }
   giveReward(R);
-  if (cleared) ds.clear[d.id] = Math.max(ds.clear[d.id] || 0, t);
+  if (cleared && G.mode !== 'wboss') ds.clear[d.id] = Math.max(ds.clear[d.id] || 0, t);
   ensureProfile(); SAVE.stats.kills += G.kills; SAVE.stats.time += Math.floor(G.t);
   const xp = Math.floor((25 + 12 * t) * (won ? 1 : 0.5)), lvl = grantPlayerXp(xp); persist();
   G.reward = { gold: R.gold || 0, sig: R.sigils || 0, xp, lvl };
@@ -4104,6 +4131,7 @@ function drawDunHud(c) {
   if (G.mode === 'gold') c.fillText('Gilded slain ' + D.kills + ' / 15 · ' + fmtNum(Math.round(D.gold)) + ' gold', W / 2, y);
   else if (G.mode === 'sigil') { c.fillText('Crystal ' + Math.round(G.crystal.hp) + '% · Wave ' + D.wave, W / 2, y); hudBar(c, W / 2 - 100, y + 18, 200, 6, G.crystal.hp / G.crystal.max, 0, '#c8a0ff', '#4a2a8a'); }
   else if (G.mode === 'fam' && !D.mother) c.fillText('The Den Mother stirs...', W / 2, y);
+  else if (G.mode === 'wboss') c.fillText('Damage dealt ' + fmtNum(Math.round(D.wdmg || 0)), W / 2, y);
   else if (G.mode === 'trial') c.fillText('Bell ' + Math.min(3, D.bossN + 1) + ' of 3', W / 2, y);
 }
 
@@ -4154,6 +4182,283 @@ function openEvent() {
     });
     renderWingShop(m.querySelector('#evShop'), true);
   }, true);
+}
+
+/* ---------------- Online: realms, cloud save, leaderboards, world boss, guilds ---------------- */
+// Paste the web app config from Firebase console > Project settings > Your apps. These values are public.
+const FIREBASE_CONFIG = null;
+const REALM_CAP = 3000, REALM_DAYS = 21, GUILD_MAX = 30, GUILD_COST = { gold: 1000 }, OFFER_GOLD = 200, WB_TRIES = 2;
+const REALM_NAMES = ['Ashfall', 'Emberwatch', 'Gravewind', 'Duskhold', 'Cinderreach', 'Bellmourne', 'Hollowmere', 'Pyrewood', 'Blackvigil', 'Sorrowgate', 'Thornkeep', 'Wraithmoor'];
+const realmName = n => REALM_NAMES[(n - 1) % REALM_NAMES.length] + (n > REALM_NAMES.length ? ' ' + ROMAN[Math.floor((n - 1) / REALM_NAMES.length)] || '' : '');
+const guildLevel = xp => Math.min(10, 1 + Math.floor(Math.sqrt((xp || 0) / 60)));
+const guildNext = lv => lv >= 10 ? null : lv * lv * 60;
+const BAD_WORDS = /\b(fuck|shit|cunt|nigg|fag|retard|bitch|whore|slut|kys)\w*/gi;
+const cleanText = t => String(t || '').replace(/[<>]/g, '').replace(BAD_WORDS, m => '*'.repeat(m.length)).trim();
+const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+function isoWeek(d = new Date()) { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y = t.getUTCFullYear(), w = Math.ceil(((t - Date.UTC(y, 0, 1)) / 864e5 + 1) / 7); return y + '-W' + String(w).padStart(2, '0'); }
+const WB_KINDS = [{ i: 0, name: 'The Colossus of Ash' }, { i: 1, name: 'The Hive Mother' }, { i: 2, name: 'The Undying Warden' }];
+const wbKind = wk => WB_KINDS[(parseInt(wk.slice(-2), 10) || 0) % WB_KINDS.length];
+const WB_MILES = [{ k: 0.25, give: { gold: 400 } }, { k: 0.5, give: { sigils: 10 } }, { k: 0.75, give: { claims: { iron: 1 } } }, { k: 1, give: { sigils: 25, gold: 1000 } }];
+function loadScript(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
+const Online = {
+  state: 'off', uid: null, realmId: null, realm: null, guild: null, member: null, wb: null, fb: null, db: null, saveT: 0, unsub: null, err: '',
+  get cfg() { return window.__FB_EMU ? { apiKey: 'demo-key', authDomain: 'demo-ashen.firebaseapp.com', projectId: 'demo-ashen', appId: 'demo' } : FIREBASE_CONFIG; },
+  get on() { return this.state === 'ready'; },
+  async init() {
+    if (!this.cfg || this.state !== 'off') return;
+    this.state = 'loading';
+    try {
+      for (const n of ['app', 'auth', 'firestore']) {
+        const f = 'firebase-' + n + '-compat.js';
+        try { await loadScript('vendor/' + f); } catch (e) { await loadScript('https://cdn.jsdelivr.net/npm/firebase@10.12.2/' + f); }
+      }
+      const fb = this.fb = window.firebase; fb.initializeApp(this.cfg);
+      if (window.__FB_EMU) { fb.auth().useEmulator('http://127.0.0.1:9099'); fb.firestore().useEmulator('127.0.0.1', 8080); }
+      this.db = fb.firestore();
+      const auth = fb.auth();
+      await new Promise(ok => { const u = auth.onAuthStateChanged(() => { u(); ok(); }); });
+      if (!auth.currentUser) await auth.signInAnonymously();
+      this.uid = auth.currentUser.uid;
+      await this.joinRealm(); await this.loadGuild(); await this.pushSave(true); await this.pushScore();
+      this.state = 'ready';
+    } catch (e) { console.warn('Online init failed', e); this.state = 'error'; this.err = String(e && e.message || e); }
+    if (state === 'title') renderHub();
+  },
+  ts() { return this.fb.firestore.FieldValue.serverTimestamp(); },
+  inc(n) { return this.fb.firestore.FieldValue.increment(n); },
+  async joinRealm() {
+    const db = this.db, pref = db.doc('players/' + this.uid), p = await pref.get();
+    let rid = p.exists ? p.data().realm : null;
+    if (rid) {
+      let start = rid;
+      for (let i = 0; i < 6; i++) { const r = await db.doc('realms/' + rid).get(); if (r.exists && r.data().mergedInto) rid = r.data().mergedInto; else break; }
+      if (rid !== start) { await pref.set({ realm: rid, guild: null }, { merge: true }); SAVE.guildId = null; toast('Your realm has merged into ' + rid.toUpperCase() + '. New allies await.'); }
+    } else {
+      rid = await this.pickRealm();
+      await pref.set({ realm: rid, name: SAVE.profile.name, created: this.ts() }, { merge: true });
+      await db.doc('realms/' + rid).update({ players: this.inc(1) });
+    }
+    this.realmId = rid; this.realm = (await db.doc('realms/' + rid).get()).data();
+    SAVE.realm = rid; persist();
+  },
+  async pickRealm() {
+    const db = this.db;
+    for (let tries = 0; tries < 4; tries++) {
+      const q = await db.collection('realms').orderBy('n', 'desc').limit(1).get();
+      const top = q.empty ? null : q.docs[0], d = top && top.data();
+      const age = d && d.opened && d.opened.toMillis ? (Date.now() - d.opened.toMillis()) / 864e5 : 0;
+      if (d && !d.closed && !d.mergedInto && d.players < (d.cap || REALM_CAP) && age < REALM_DAYS) return top.id;
+      const n = d ? d.n + 1 : 1, id = 'r' + n;
+      try { await db.runTransaction(async tx => { const ref = db.doc('realms/' + id), s = await tx.get(ref); if (!s.exists) tx.set(ref, { n, name: realmName(n), players: 0, opened: this.ts(), cap: REALM_CAP, mergedInto: null, closed: false }); }); return id; }
+      catch (e) { /* someone else opened it first: read again */ }
+    }
+    throw new Error('Could not find a realm');
+  },
+  queueSave() { if (!this.on) return; clearTimeout(this.saveT); this.saveT = setTimeout(() => this.pushSave(), 15000); },
+  async pushSave(first) {
+    if (!this.db || !this.uid) return;
+    try {
+      const ref = this.db.doc('saves/' + this.uid);
+      if (first) { const c = await ref.get(); if (c.exists && (c.data().ts || 0) > (SAVE.ts || 0) + 60000 && SAVE.runs === 0) { this.adopt(c.data().data); return; } }
+      SAVE.ts = Date.now(); store.set(SAVE_KEY, SAVE);
+      await ref.set({ data: JSON.stringify(SAVE), ts: SAVE.ts, plv: SAVE.plv, at: this.ts() });
+    } catch (e) { console.warn('Cloud save failed', e); }
+  },
+  adopt(json) { try { const d = JSON.parse(json); if (d && d.items) { SAVE = d; migrateSave(); store.set(SAVE_KEY, SAVE); renderHub(); toast('Cloud save restored.'); } } catch (e) {} },
+  async pushScore() {
+    if (!this.db || !this.realmId) return;
+    const s = { name: SAVE.profile.name.slice(0, 16), ava: SAVE.profile.avatar, plv: SAVE.plv, kills: SAVE.stats.kills || 0, guild: (this.guild && this.guild.tag) || '', at: this.ts() };
+    STAGES.forEach((st, i) => { s['s' + i] = Math.min(1200, SAVE.best[st.id] || 0); s['h' + i] = Math.min(1200, (SAVE.bestHard || {})[st.id] || 0); });
+    try { await this.db.doc('realms/' + this.realmId + '/scores/' + this.uid).set(s); await this.db.doc('players/' + this.uid).set({ name: s.name, plv: s.plv }, { merge: true }); } catch (e) { console.warn('Score upload failed', e); }
+  },
+  async board(field) { const q = await this.db.collection('realms/' + this.realmId + '/scores').orderBy(field, 'desc').limit(50).get(); return q.docs.map(d => ({ id: d.id, ...d.data() })); },
+  /* transfer codes: link the anonymous account to a generated email and password */
+  async makeTransfer() {
+    const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', pick = n => Array.from(crypto.getRandomValues(new Uint32Array(n)), v => A[v % A.length]).join('');
+    const code = pick(4) + '-' + pick(4), pass = pick(10);
+    const cred = this.fb.auth.EmailAuthProvider.credential(code.toLowerCase() + '@transfer.ashenvigil.app', pass);
+    await this.fb.auth().currentUser.linkWithCredential(cred);
+    await this.pushSave(); SAVE.linked = code; persist();
+    return { code, pass };
+  },
+  async useTransfer(code, pass) {
+    const auth = this.fb.auth();
+    await auth.signInWithEmailAndPassword(code.trim().toLowerCase() + '@transfer.ashenvigil.app', pass.trim());
+    this.uid = auth.currentUser.uid;
+    const c = await this.db.doc('saves/' + this.uid).get();
+    if (c.exists) this.adopt(c.data().data);
+    await this.joinRealm(); await this.loadGuild();
+  },
+  /* world boss */
+  async loadBoss() {
+    const wk = isoWeek(), ref = this.db.doc('realms/' + this.realmId + '/boss/' + wk);
+    let s = await ref.get();
+    if (!s.exists) {
+      const hp = Math.max(1e6, Math.min(5e9, (this.realm.players || 1) * 8e4)); // tuned so an active realm finishes late in the week
+      try { await ref.set({ hp, dmg: 0, kind: wbKind(wk).i, created: this.ts() }); } catch (e) {}
+      s = await ref.get();
+    }
+    const mine = await ref.collection('hits').doc(this.uid).get();
+    const top = await ref.collection('hits').orderBy('dmg', 'desc').limit(20).get();
+    this.wb = { wk, ...s.data(), mine: mine.exists ? mine.data().dmg : 0, top: top.docs.map(d => ({ id: d.id, ...d.data() })) };
+    return this.wb;
+  },
+  async hitBoss(dmg) {
+    dmg = Math.max(0, Math.min(3e6, Math.round(dmg))); if (!dmg || !this.on) return;
+    const ref = this.db.doc('realms/' + this.realmId + '/boss/' + isoWeek());
+    try { await ref.update({ dmg: this.inc(dmg) }); await ref.collection('hits').doc(this.uid).set({ name: SAVE.profile.name.slice(0, 16), dmg: this.inc(dmg), at: this.ts() }, { merge: true }); } catch (e) { console.warn('Boss damage upload failed', e); }
+  },
+  /* guilds */
+  async loadGuild() {
+    this.guild = this.member = null;
+    const p = await this.db.doc('players/' + this.uid).get(), gid = p.exists && p.data().guild;
+    if (!gid) { SAVE.guildId = null; SAVE.guildLv = 0; return; }
+    const g = await this.db.doc('guilds/' + gid).get(), m = await this.db.doc('guilds/' + gid + '/members/' + this.uid).get();
+    if (!g.exists || !m.exists || g.data().realm !== this.realmId) { await this.db.doc('players/' + this.uid).set({ guild: null }, { merge: true }); SAVE.guildId = null; SAVE.guildLv = 0; return; }
+    this.guild = { id: gid, ...g.data() }; this.member = m.data(); SAVE.guildId = gid; SAVE.guildLv = guildLevel(this.guild.xp);
+  },
+  async listGuilds() { const q = await this.db.collection('guilds').where('realm', '==', this.realmId).limit(60).get(); return q.docs.map(d => ({ id: d.id, ...d.data() })).filter(g => g.open !== false).sort((a, b) => (b.xp || 0) - (a.xp || 0)); },
+  async createGuild(name, tag) {
+    const db = this.db, ref = db.collection('guilds').doc(), b = db.batch();
+    b.set(ref, { realm: this.realmId, name, tag, leader: this.uid, members: 1, xp: 0, open: true, desc: 'All who keep the flame are welcome.', created: this.ts() });
+    b.set(ref.collection('members').doc(this.uid), { name: SAVE.profile.name.slice(0, 16), role: 'leader', xp: 0, joined: this.ts() });
+    b.set(db.doc('players/' + this.uid), { guild: ref.id }, { merge: true });
+    await b.commit(); await this.loadGuild(); await this.pushScore();
+  },
+  async joinGuild(gid) {
+    const db = this.db, b = db.batch();
+    b.set(db.doc('guilds/' + gid + '/members/' + this.uid), { name: SAVE.profile.name.slice(0, 16), role: 'member', xp: 0, joined: this.ts() });
+    b.update(db.doc('guilds/' + gid), { members: this.inc(1) });
+    b.set(db.doc('players/' + this.uid), { guild: gid }, { merge: true });
+    await b.commit(); await this.loadGuild(); await this.pushScore();
+  },
+  async leaveGuild() {
+    const g = this.guild; if (!g) return; const db = this.db, b = db.batch();
+    b.delete(db.doc('guilds/' + g.id + '/members/' + this.uid));
+    if (g.leader === this.uid) b.delete(db.doc('guilds/' + g.id)); else b.update(db.doc('guilds/' + g.id), { members: this.inc(-1) });
+    b.set(db.doc('players/' + this.uid), { guild: null }, { merge: true });
+    await b.commit(); await this.loadGuild(); await this.pushScore();
+  },
+  async kick(uid) { const g = this.guild, db = this.db, b = db.batch(); b.delete(db.doc('guilds/' + g.id + '/members/' + uid)); b.update(db.doc('guilds/' + g.id), { members: this.inc(-1) }); await b.commit(); },
+  async members() { const q = await this.db.collection('guilds/' + this.guild.id + '/members').get(); return q.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.xp || 0) - (a.xp || 0)); },
+  async offer() {
+    const g = this.guild, db = this.db, b = db.batch();
+    b.update(db.doc('guilds/' + g.id), { xp: this.inc(20) });
+    b.update(db.doc('guilds/' + g.id + '/members/' + this.uid), { xp: this.inc(20) });
+    await b.commit(); await this.loadGuild();
+  },
+  listenChat(cb) { this.stopChat(); this.unsub = this.db.collection('guilds/' + this.guild.id + '/chat').orderBy('at', 'desc').limit(40).onSnapshot(s => cb(s.docs.map(d => ({ id: d.id, ...d.data() })).reverse()), () => {}); },
+  stopChat() { if (this.unsub) { this.unsub(); this.unsub = null; } },
+  async say(text) { text = cleanText(text).slice(0, 160); if (!text) return; await this.db.collection('guilds/' + this.guild.id + '/chat').add({ uid: this.uid, name: SAVE.profile.name.slice(0, 16), text, at: this.ts() }); },
+  async report(msg) { await this.db.collection('reports').add({ by: this.uid, target: msg.uid, text: msg.text, guild: this.guild ? this.guild.id : '', at: this.ts() }); },
+};
+/* ---------------- Realm window ---------------- */
+let realmTab = 'ranks', boardField = 's0';
+function openRealm(tab) {
+  if (tab) realmTab = tab;
+  if (!Online.cfg) { openModal(`<div class="mribbon">Realms</div><p class="muted" style="text-align:center">Realms open soon: server leaderboards, a weekly world boss, guilds with chat, and cloud saves.</p><div class="row"><button class="btn" id="mClose">Close</button></div>`, m => { m.querySelector('#mClose').onclick = closeModal; }); return; }
+  if (!Online.on) {
+    if (Online.state === 'off' || Online.state === 'error') Online.init().then(() => { if (!$('modal').hidden && $('modalBody').querySelector('.realm-wait')) openRealm(); });
+    openModal(`<div class="mribbon">Realms</div><p class="muted realm-wait" style="text-align:center">${Online.state === 'error' ? 'Could not reach the realms. Check your connection and try again.' : 'Reaching the realms...'}</p><div class="row"><button class="btn ghost" id="mClose">Close</button></div>`, m => { m.querySelector('#mClose').onclick = closeModal; });
+    return;
+  }
+  const tabs = [['ranks', 'Ranks'], ['boss', 'World boss'], ['guild', 'Guild'], ['acct', 'Account']];
+  openModal(`<div class="mribbon">${esc(Online.realm.name)}</div>
+    <p class="muted" style="text-align:center;margin:-4px 0 6px">Realm ${Online.realm.n} · ${fmtNum(Online.realm.players)} pilgrims</p>
+    <div class="subtabs rtabs">${tabs.map(([k, l]) => `<button data-rt="${k}" aria-selected="${realmTab === k}">${l}</button>`).join('')}</div>
+    <div id="realmBody" class="realmbody"><p class="muted" style="text-align:center">Loading...</p></div>
+    <div class="row"><button class="btn ghost" id="mClose">Close</button></div>`, m => {
+    m.querySelector('#mClose').onclick = () => { Online.stopChat(); closeModal(); };
+    m.querySelectorAll('[data-rt]').forEach(b => b.onclick = () => { Online.stopChat(); openRealm(b.dataset.rt); });
+    ({ ranks: realmRanks, boss: realmBoss, guild: realmGuild, acct: realmAcct })[realmTab]($('realmBody')).catch(e => { $('realmBody').innerHTML = `<p class="muted">Something went wrong: ${esc(e.message)}</p>`; });
+  }, true);
+}
+async function realmRanks(el) {
+  const opts = STAGES.map((s, i) => ['s' + i, s.name]).concat(STAGES.map((s, i) => ['h' + i, s.name + ' (hard)'])).concat([['plv', 'Player level'], ['kills', 'Dead slain']]);
+  const rows = await Online.board(boardField), fmt = v => boardField === 'plv' || boardField === 'kills' ? fmtNum(v || 0) : fmtTime(v || 0);
+  const mine = rows.findIndex(r => r.id === Online.uid);
+  el.innerHTML = `<select id="rkSel" class="rksel">${opts.map(([k, l]) => `<option value="${k}" ${k === boardField ? 'selected' : ''}>${l}</option>`).join('')}</select>
+    <div class="rklist">${rows.filter(r => r[boardField] > 0).map((r, i) => `<div class="rkrow${r.id === Online.uid ? ' me' : ''}"><b class="rkn">${i + 1}</b><img src="${portrait(r.ava || 'knight')}" alt=""><span>${esc(r.name)}${r.guild ? ` <i>[${esc(r.guild)}]</i>` : ''}</span><em>${fmt(r[boardField])}</em></div>`).join('') || '<p class="muted" style="text-align:center">No records yet. Be the first.</p>'}</div>
+    <p class="muted" style="text-align:center;font-size:13px">${mine >= 0 ? 'You are ranked ' + (mine + 1) + ' in this realm.' : 'Top 50 in this realm. Your records upload after each run.'}</p>`;
+  el.querySelector('#rkSel').onchange = e => { boardField = e.target.value; realmRanks(el); };
+}
+async function realmBoss(el) {
+  const w = await Online.loadBoss(), k = wbKind(w.wk), frac = Math.min(1, w.dmg / w.hp), left = WB_TRIES - ((SAVE.wbDay === todayKey() ? SAVE.wbUsed : 0) || 0);
+  SAVE.wbClaim = SAVE.wbClaim && SAVE.wbClaim.wk === w.wk ? SAVE.wbClaim : { wk: w.wk, got: [] };
+  const now = new Date(), day = now.getDay() || 7, endsH = Math.max(1, Math.round(((8 - day) * 24 - now.getHours())));
+  el.innerHTML = `<div class="wbhead"><img src="${assetUrl('boss_' + BOSSES[k.i].id)}" alt=""><div><h3>${k.name}</h3><p class="muted">The whole realm fights this week's boss together. Every blow counts. Ends in ${Math.floor(endsH / 24)}d ${endsH % 24}h.</p></div></div>
+    <div class="evbar wbbar"><i style="width:${(frac * 100).toFixed(1)}%"></i><b>${fmtNum(Math.round(w.dmg))} / ${fmtNum(Math.round(w.hp))} (${Math.floor(frac * 100)}%)</b></div>
+    <div class="evlist">${WB_MILES.map((m, i) => { const got = SAVE.wbClaim.got.includes(i), ready = frac >= m.k && w.mine > 0 && !got;
+      return `<div class="evrow${got ? ' got' : ready ? ' ready' : ''}"><b class="evf">${m.k * 100}%</b><span>${rewardLine(m.give)}</span>${got ? '<em>Claimed</em>' : ready ? `<button class="buy" data-wm="${i}">Claim</button>` : `<em>${w.mine > 0 ? 'Realm progress' : 'Fight once to qualify'}</em>`}</div>`; }).join('')}</div>
+    <p class="muted" style="text-align:center">Your damage this week: <b style="color:#ffd27a">${fmtNum(Math.round(w.mine))}</b></p>
+    <button class="btn" id="wbGo" ${left > 0 ? '' : 'disabled'}>${left > 0 ? `Fight · ${left} / ${WB_TRIES} today` : 'Come back tomorrow'}</button>
+    <div class="ph" style="margin-top:12px">Top of the realm</div>
+    <div class="rklist">${w.top.map((r, i) => `<div class="rkrow${r.id === Online.uid ? ' me' : ''}"><b class="rkn">${i + 1}</b><span>${esc(r.name)}</span><em>${fmtNum(Math.round(r.dmg))}</em></div>`).join('') || '<p class="muted" style="text-align:center">No one has struck yet.</p>'}</div>`;
+  el.querySelectorAll('[data-wm]').forEach(b => b.onclick = () => { const i = +b.dataset.wm; if (SAVE.wbClaim.got.includes(i)) return; SAVE.wbClaim.got.push(i); giveReward(WB_MILES[i].give); persist(); SND.init(); SND.chest(); toast('Claimed ' + rewardLine(WB_MILES[i].give) + '.'); renderHub(); openRealm('boss'); });
+  const go = el.querySelector('#wbGo'); if (go) go.onclick = () => { if (SAVE.wbDay !== todayKey()) { SAVE.wbDay = todayKey(); SAVE.wbUsed = 0; } SAVE.wbUsed++; persist(); Online.stopChat(); startDungeon('wboss', dunCap()); };
+}
+async function realmGuild(el) {
+  await Online.loadGuild();
+  const g = Online.guild;
+  if (!g) {
+    const list = await Online.listGuilds();
+    el.innerHTML = `<p class="muted" style="text-align:center">Guilds share a level that raises gold earned by every member, and a private chat.</p>
+      <div class="rklist">${list.map(x => `<div class="rkrow"><b class="rkn">${guildLevel(x.xp)}</b><span><b>[${esc(x.tag)}]</b> ${esc(x.name)}<br><small class="muted">${esc(x.desc || '')}</small></span><em>${x.members}/${GUILD_MAX}</em>${x.members < GUILD_MAX ? `<button class="btn ghost gjoin" data-g="${x.id}">Join</button>` : ''}</div>`).join('') || '<p class="muted" style="text-align:center">No guilds in this realm yet.</p>'}</div>
+      <div class="gcreate"><input id="gName" maxlength="20" placeholder="Guild name"><input id="gTag" maxlength="4" placeholder="Tag"><button class="buy" id="gMake">Found · ${costHTML(GUILD_COST)}</button></div>`;
+    el.querySelectorAll('[data-g]').forEach(b => b.onclick = async () => { b.disabled = true; try { await Online.joinGuild(b.dataset.g); toast('You joined the guild.'); openRealm('guild'); } catch (e) { toast('Could not join. The guild may be full.'); b.disabled = false; } });
+    el.querySelector('#gMake').onclick = async () => {
+      const name = cleanText($('gName').value).slice(0, 20), tag = cleanText($('gTag').value).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+      if (name.length < 3 || tag.length < 2) { toast('Give your guild a name (3+ letters) and a tag (2-4 letters).'); return; }
+      if (!pay(GUILD_COST)) { toast('You need ' + fmtNum(GUILD_COST.gold) + ' gold to found a guild.'); return; }
+      try { await Online.createGuild(name, tag); persist(); renderHub(); toast('[' + tag + '] ' + name + ' is founded.'); openRealm('guild'); } catch (e) { SAVE.gold += GUILD_COST.gold; persist(); toast('Could not found the guild.'); }
+    };
+    return;
+  }
+  const lv = guildLevel(g.xp), next = guildNext(lv), mem = await Online.members(), lead = g.leader === Online.uid, offered = SAVE.gOffer === todayKey();
+  el.innerHTML = `<div class="wbhead"><div class="gbadge">${esc(g.tag)}</div><div><h3>${esc(g.name)}</h3><p class="muted">Level ${lv} · +${lv}% gold for every member · ${g.members}/${GUILD_MAX} members</p></div></div>
+    <div class="evbar"><i style="width:${next ? Math.min(100, (g.xp || 0) / next * 100) : 100}%"></i><b>${next ? fmtNum(g.xp || 0) + ' / ' + fmtNum(next) + ' guild XP' : 'Max level'}</b></div>
+    <button class="buy" id="gOffer" ${offered ? 'disabled' : ''}>${offered ? 'Offering made today' : 'Daily offering · ' + costHTML({ gold: OFFER_GOLD }) + ' → +20 guild XP'}</button>
+    <div class="ph" style="margin-top:12px">Guild chat</div>
+    <div class="gchat" id="gChat"><p class="muted">Loading...</p></div>
+    <div class="gsay"><input id="gMsg" maxlength="160" placeholder="Say something kind"><button class="btn" id="gSend">Send</button></div>
+    <p class="muted" style="font-size:12px;text-align:center;margin:4px 0">Be respectful. Long-press or tap a message to report or block.</p>
+    <div class="ph">Members</div>
+    <div class="rklist">${mem.map(x => `<div class="rkrow${x.id === Online.uid ? ' me' : ''}"><span>${esc(x.name)}${x.role === 'leader' ? ' <i>leader</i>' : ''}</span><em>${fmtNum(x.xp || 0)} XP</em>${lead && x.id !== Online.uid ? `<button class="btn ghost gkick" data-k="${x.id}">Remove</button>` : ''}</div>`).join('')}</div>
+    <button class="btn ghost pquit" id="gLeave">${lead && g.members > 1 ? 'Leaders can leave once they are the last member' : lead ? 'Disband guild' : 'Leave guild'}</button>`;
+  el.querySelector('#gOffer').onclick = async () => { if (SAVE.gOffer === todayKey()) return; if (!pay({ gold: OFFER_GOLD })) { toast('Not enough gold.'); return; } SAVE.gOffer = todayKey(); persist(); try { await Online.offer(); toast('+20 guild XP.'); } catch (e) { toast('The offering did not reach the guild.'); } renderHub(); openRealm('guild'); };
+  el.querySelectorAll('[data-k]').forEach(b => b.onclick = async () => { b.disabled = true; try { await Online.kick(b.dataset.k); openRealm('guild'); } catch (e) { b.disabled = false; } });
+  const lb = el.querySelector('#gLeave'); if (lead && g.members > 1) lb.disabled = true;
+  lb.onclick = async () => { lb.disabled = true; try { await Online.leaveGuild(); toast('You left the guild.'); openRealm('guild'); } catch (e) { lb.disabled = false; } };
+  const send = async () => { const i = $('gMsg'); const t = i.value; i.value = ''; try { await Online.say(t); } catch (e) { toast('Message not sent.'); } };
+  el.querySelector('#gSend').onclick = send; el.querySelector('#gMsg').onkeydown = e => { if (e.key === 'Enter') send(); e.stopPropagation(); };
+  const blocked = new Set(SAVE.blocked || []);
+  Online.listenChat(msgs => {
+    const box = $('gChat'); if (!box) return;
+    box.innerHTML = msgs.filter(x => !blocked.has(x.uid)).map(x => `<div class="gmsg${x.uid === Online.uid ? ' me' : ''}" data-m="${x.id}"><b>${esc(x.name)}</b> ${esc(x.text)}</div>`).join('') || '<p class="muted">No messages yet.</p>';
+    box.scrollTop = box.scrollHeight;
+    box.querySelectorAll('[data-m]').forEach(n => n.onclick = () => { const msg = msgs.find(x => x.id === n.dataset.m); if (!msg || msg.uid === Online.uid) return; chatActions(msg); });
+  });
+}
+function chatActions(msg) {
+  const bar = document.createElement('div'); bar.className = 'gact';
+  bar.innerHTML = `<span>${esc(msg.name)}</span><button class="btn ghost" data-a="r">Report</button><button class="btn ghost" data-a="b">Block</button><button class="btn ghost" data-a="x">Cancel</button>`;
+  const old = document.querySelector('.gact'); if (old) old.remove(); $('gChat').after(bar);
+  bar.querySelector('[data-a=r]').onclick = async () => { try { await Online.report(msg); toast('Reported. Thank you.'); } catch (e) { toast('Report failed.'); } bar.remove(); };
+  bar.querySelector('[data-a=b]').onclick = () => { SAVE.blocked = Array.from(new Set([...(SAVE.blocked || []), msg.uid])); persist(); toast(msg.name + ' is blocked. You will not see their messages.'); bar.remove(); openRealm('guild'); };
+  bar.querySelector('[data-a=x]').onclick = () => bar.remove();
+}
+async function realmAcct(el) {
+  el.innerHTML = `<p class="muted" style="text-align:center">Your progress is saved to the cloud automatically while you are online.</p>
+    <div class="acct-stats"><div><b>${esc(Online.realm.name)}</b><span>Realm</span></div><div><b>${esc(SAVE.linked || 'None')}</b><span>Transfer code</span></div></div>
+    <div class="ph">Move to a new phone</div>
+    <p class="muted" style="font-size:14px">Create a transfer code and password, write them down, then enter them on your new device. Codes can only be created once.</p>
+    <div class="row setrow">${SAVE.linked ? '' : '<button class="btn" id="tMake">Create transfer code</button>'}</div>
+    <div class="ph">Use a transfer code</div>
+    <div class="gcreate"><input id="tCode" placeholder="Code (ABCD-1234)" maxlength="9" autocomplete="off"><input id="tPass" placeholder="Password" maxlength="10" autocomplete="off"><button class="btn ghost" id="tUse">Restore</button></div>
+    <p class="muted" style="font-size:13px">Restoring replaces the progress on this device with the saved progress.</p>`;
+  const mk = el.querySelector('#tMake');
+  if (mk) mk.onclick = async () => { mk.disabled = true; try { const r = await Online.makeTransfer(); openModal(`<div class="mribbon">Transfer code</div><p class="muted" style="text-align:center">Write these down and keep them private. Anyone with them can take your progress.</p><div class="acct-stats"><div><b>${r.code}</b><span>Code</span></div><div><b>${r.pass}</b><span>Password</span></div></div><div class="row"><button class="btn" id="mClose">I wrote them down</button></div>`, m => { m.querySelector('#mClose').onclick = closeModal; }); } catch (e) { toast('Could not create a code: ' + e.message); mk.disabled = false; } };
+  el.querySelector('#tUse').onclick = async () => { const c = $('tCode').value, p = $('tPass').value; if (!c || !p) return; try { await Online.useTransfer(c, p); toast('Progress restored.'); closeModal(); renderHub(); } catch (e) { toast('That code and password did not match.'); } };
 }
 
 /* merging */
@@ -4446,9 +4751,9 @@ function sideBtn(id, img, label, badge) {
 }
 function renderSide() {
   const freeReady = Date.now() >= SAVE.freeChestAt, claims = claimsCount();
-  $('sideL').innerHTML = sideBtn('sbDaily', 'chest_wood_0', 'Daily', dailyReady()) + sideBtn('sbUrn', 'prop_urn', 'Urn ' + Math.round(SAVE.urn / URN.cap * 100) + '%', SAVE.urn >= URN.cap);
+  $('sideL').innerHTML = sideBtn('sbDaily', 'chest_wood_0', 'Daily', dailyReady()) + sideBtn('sbUrn', 'prop_urn', 'Urn ' + Math.round(SAVE.urn / URN.cap * 100) + '%', SAVE.urn >= URN.cap) + sideBtn('sbRealm', 'prop_shrine', Online.on ? Online.realm.name : 'Realm', false);
   $('sideR').innerHTML = sideBtn('sbPath', 'cur_ember', 'Level ' + SAVE.plv, false) + sideBtn('sbFree', 'chest_iron_0', 'Chests', claims ? claims : freeReady) + sideBtn('sbEvent', 'item_wings_2', 'Event', eventClaimable() > 0);
-  $('sbDaily').onclick = openDaily; $('sbUrn').onclick = openUrn; $('sbPath').onclick = openPath;
+  $('sbDaily').onclick = openDaily; $('sbRealm').onclick = () => openRealm(); $('sbUrn').onclick = openUrn; $('sbPath').onclick = openPath;
   $('sbFree').onclick = () => { hubTab = 'shop'; renderHub(); };
   $('sbEvent').onclick = openEvent;
 }
@@ -4699,13 +5004,14 @@ function openAccount() {
     <div class="eyebrow">Portrait</div>
     <div class="ava-pick">${Object.keys(CLASSES).map(id => { const own = SAVE.origins.includes(id); return `<button class="ava${id === P_.avatar ? ' on' : ''}${own ? '' : ' locked'}" data-a="${id}" ${own ? '' : 'disabled'} aria-label="${CLASSES[id].name}"><img src="${portrait(id)}" alt=""></button>`; }).join('')}</div>
     <div class="acct-stats">${tiles.map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>
-    <p class="note" style="font-size:14px;margin:0">Progress is saved on this device. Cloud saves arrive with the Android and iOS app.</p>
-    <div class="row" style="justify-content:center"><button class="btn ghost" id="mSettings">Settings</button><button class="btn" id="mClose" style="padding:12px 26px;font-size:14px">Done</button></div>`, m => {
+    <p class="note" style="font-size:14px;margin:0">${Online.on ? 'Cloud save is on. Realm: ' + esc(Online.realm.name) + '.' : 'Progress is saved on this device.'}</p>
+    <div class="row" style="justify-content:center">${Online.cfg ? '<button class="btn ghost" id="mRealm">Realm and transfer</button>' : ''}<button class="btn ghost" id="mSettings">Settings</button><button class="btn" id="mClose" style="padding:12px 26px;font-size:14px">Done</button></div>`, m => {
     const inp = m.querySelector('#acctName');
     inp.oninput = () => { SAVE.profile.name = inp.value.trim().slice(0, 16) || 'Pilgrim'; persist(); renderAccountBtn(); };
     m.querySelectorAll('[data-a]').forEach(b => b.onclick = () => { SAVE.profile.avatar = b.dataset.a; persist(); renderAccountBtn(); openAccount(); });
     m.querySelector('#mSettings').onclick = () => openSettings(false);
-    m.querySelector('#mClose').onclick = closeModal;
+    const rb = m.querySelector('#mRealm'); if (rb) rb.onclick = () => openRealm('acct');
+    m.querySelector('#mClose').onclick = () => { closeModal(); try { Online.pushScore(); } catch (e) {} };
   });
 }
 function renderAccountBtn() { ensureProfile(); $('acctImg').src = portrait(SAVE.profile.avatar); $('acctBtn').setAttribute('aria-label', 'Account: ' + SAVE.profile.name); }
@@ -4952,6 +5258,7 @@ $('splash').addEventListener('click', dismissSplash);
 document.querySelector('.brand').addEventListener('click', showSplash);
 showSplash();
 loadArt();
+setTimeout(() => { try { Online.init(); } catch (e) {} }, 1200);
 
 /* ---------------- Input ---------------- */
 window.addEventListener('keydown', e => {

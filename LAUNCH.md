@@ -81,11 +81,22 @@ Testing and release:
 - [ ] Add the same product IDs as Play Console.
 - [ ] Copy the **public Android SDK key** (starts with `goog_`) and send it to me; I'll put it in the game.
 
-## 6. Later, for iPhone
+## 6. Firebase (realms, cloud save, leaderboards, world boss, guilds) — https://console.firebase.google.com
+
+- [ ] **Add project**: name it `ashen-vigil`. Google Analytics: off (not needed).
+- [ ] **Build > Authentication > Get started > Sign-in method**: enable **Anonymous** and **Email/Password** (Email/Password is used for transfer codes).
+- [ ] **Build > Firestore Database > Create database**: production mode, location `australia-southeast1` (or the region nearest most players).
+- [ ] **Firestore > Rules**: replace everything with the contents of `firestore.rules` from this repo and click **Publish**.
+- [ ] **Project settings (gear) > General > Your apps > Web (</>)**: register an app called "Ashen Vigil". Copy the `firebaseConfig` block it shows and send it to me. (These values are public; they're safe to paste in chat.)
+- [ ] Stay on the free **Spark** plan. It covers thousands of daily players. Upgrade only if Firebase emails you about limits.
+- **Merging realms later:** open Firestore > `realms` > the quiet realm, add a field `mergedInto` with the id of the realm to merge into (for example `r2`). Players move over the next time they open the game. To stop new players joining a realm early, set `closed` to `true`.
+- **Reports:** reported chat messages appear in Firestore > `reports`. Check them now and then.
+
+## 7. Later, for iPhone
 
 - [ ] Apple Developer Program (US$99/year), a Mac with Xcode, App Store Connect listing, the same product IDs, and the RevenueCat iOS key.
 
-## 7. Answers for Play Console forms
+## 8. Answers for Play Console forms
 
 **Content rating (IARC)**
 - Category: Game.
@@ -111,3 +122,8 @@ Testing and release:
   - *Crash logs and diagnostics*: collected by AdMob for Analytics.
 - Not collected: name, email, contacts, photos, precise location, messages, health, financial info (Google handles payments).
 - Processed ephemerally: no. Required or optional: advertising data is optional (ads are optional and consent is asked in the EEA/UK).
+
+**When the realms update ships (Firebase on)**, update these forms:
+- *Account creation*: choose **Other** and describe it as "Automatic anonymous account; optional transfer code and password for moving progress to a new device." Account deletion: "Email the support address; we delete the account and cloud save."
+- *Data safety*, add: **Personal info > Name** (in-game display name; collected, not shared; App functionality), **Personal info > User IDs** (account ID; collected, not shared; App functionality, Account management), **Messages > Other in-app messages** (guild chat; collected, not shared; App functionality), and **App activity > Other user-generated content** (guild names; collected, not shared; App functionality).
+- *Content rating*: users can interact (guild chat); answer **Yes** to "Users can interact or exchange content". Chat has a word filter, report and block.

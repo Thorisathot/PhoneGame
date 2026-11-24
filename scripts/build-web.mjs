@@ -43,4 +43,8 @@ writeFileSync(join(out, 'index.html'), html);
 cpSync(join(root, 'assets'), join(out, 'assets'), { recursive: true });
 cpSync(join(root, 'web-static'), out, { recursive: true });
 writeFileSync(join(out, '.nojekyll'), '');
+
+// Firebase (realms, cloud save, guilds) is bundled so the app does not depend on a CDN
+const fbDir = join(root, 'node_modules', 'firebase');
+if (existsSync(fbDir)) { mkdirSync(join(out, 'vendor'), { recursive: true }); for (const n of ['app', 'auth', 'firestore']) cpSync(join(fbDir, 'firebase-' + n + '-compat.js'), join(out, 'vendor', 'firebase-' + n + '-compat.js')); }
 console.log('Built web/ (' + Math.round(html.length / 1024) + ' KB page)');
