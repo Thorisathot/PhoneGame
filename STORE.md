@@ -47,10 +47,13 @@ BUILD YOUR LEGEND
 Choose from 13 armaments, including one found only in each stage, and 7 relics as you level up. Carry up to four of each, so every pick matters. Max an armament and pair it with its relic to evolve it into something devastating.
 
 LOOT EPIC GEAR
-Open chests for helms, armor, rings and talismans in four rarities. Upgrade them, merge three into one of higher rarity, and chase legendaries. Drop odds and guarantees are always shown.
+Open chests for helms, armor, gloves, boots, rings and talismans in four rarities. Upgrade them, merge three into one of higher rarity, and chase legendaries. Drop odds and guarantees are always shown.
 
 RAID DAILY DUNGEONS
 Chase gilded thieves through the Gilded Vault, defend a sigil crystal in the Crystal Reliquary, slay the Den Mother in the Ember Hatchery to hatch a familiar companion, and survive the Trial of Bells boss rush.
+
+JOIN A REALM
+Every player joins a realm. Climb its leaderboards, team up with the whole realm to bring down a colossal weekly world boss, and found or join a guild to level up together and chat with your allies. Cloud saves keep your progress safe.
 
 SEASONAL EVENTS
 Gather feathers from hordes and bosses to earn rare wings each season.
