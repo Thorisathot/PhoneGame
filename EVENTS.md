@@ -32,6 +32,27 @@ Each event has its own currency, earned the same way: **+3 per horde broken, +2 
 | 21 Nov – 2 Dec | **Ember Festival** | Festival Embers | Double gold | Ember reliquary | Black Friday; pair with store sales |
 | 12 Dec – 1 Jan | **Winter's Vigil** | Snowflames | A free daily gift, vigil flame lasts longer | Raven Wings | Holidays; daily gift builds the login habit |
 
+## Limited-edition event cosmetics
+
+Seven events have their own wings and/or familiar. Each set has two versions:
+
+| Version | How to get it | Roughly |
+|---|---|---|
+| **Epic** | Event ladder at 160 points (familiar at 400 when the event has both) | A committed player over the two weeks |
+| **Legendary** | **Mythic milestone at 800 points**, or the paid **event bundle** (`av_event_bundle`, only on sale during the event) | 30+ full clears in two weeks, or money |
+
+| Event | Wings | Familiar |
+|---|---|---|
+| Ashen New Year | Wings of the First Dawn | — |
+| Crimson Hearts | Crimson Heartwings | Heartling |
+| Egg Hunt of the Deep | — | Ember Hatchling |
+| Midsummer Pyre | Midsummer Phoenix Wings | — |
+| The Abyssal Rift | Voidrend Wings | Voidling |
+| Hallowed Night | Hallowed Bat Wings | Pumpkin Wisp |
+| Winter's Vigil | Frostvigil Wings | Snow Owl |
+
+Event cosmetics can't be merged, so the only legendary wings in the game come from the shop, the event bundle or the Mythic milestone. Legendary familiars outside events only hatch at the highest Ember Hatchery tiers (about 2% at tier 10).
+
 ## Weekend twists (every Friday to Sunday, rotating)
 
 1. **Double Gold Weekend:** all gold in runs doubled.
@@ -62,7 +83,6 @@ Events can be changed live from the Firebase console:
 
 ## Ideas for year two
 
-- **Exclusive event cosmetics:** a wing set and a familiar per major event (Hallowed bat wings, Winter frost wings, Crimson heart familiar). This needs new art per event.
 - **Event bundles** in the shop: a themed sigil pack with an event-only cosmetic, on sale only during the event.
 - **Limited event stages:** a themed arena (pumpkin patch, frozen cathedral) with its own boss.
 - **Anniversary week** on the launch date: every weekend twist active at once.

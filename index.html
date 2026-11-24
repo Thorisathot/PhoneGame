@@ -863,6 +863,12 @@ h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance}
 #flaskBtn.act{width:50px;height:50px;right:calc(env(safe-area-inset-right,0px) + 28px);bottom:calc(env(safe-area-inset-bottom,0px) + 108px);opacity:.88}
 .tbtn.act .al{display:none}
 #flaskBtn .cnt{top:-5px;right:-5px;min-width:20px;height:20px;font-size:11px}
+.evrow.myth{border-color:#eea84a;background:linear-gradient(90deg,rgba(238,168,74,.2),rgba(10,6,20,.45));box-shadow:0 0 18px -6px #eea84a}
+.mythic{font-style:normal;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#1a0c02;background:linear-gradient(180deg,#ffe08a,#eea84a);padding:1px 6px;border-radius:6px;margin-left:4px}
+.evbundle{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;margin:10px 0;padding:12px;border-radius:16px;border:2px solid #eea84a;background:linear-gradient(160deg,rgba(238,168,74,.25),#18122a 75%);box-shadow:0 0 26px -8px #eea84a}
+.ebart{display:flex;flex:none}.ebart img{width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(238,168,74,.7))}.ebart img+img{margin-left:-14px}
+.ebtx{text-align:center;min-width:0}.ebtx h3{margin:2px 0;font-size:15px;color:#ffe08a}.ebtx p{margin:0;font-size:13px;color:#c9bfad}.ebtx .tag{font-family:var(--display);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#eea84a}
+.evbundle .btn{flex:none;padding:10px 14px}
 /* browser */
 body.incombat #game{cursor:none}
 .pkeys{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;font-size:13px;color:#a89ec0}
@@ -1313,6 +1319,7 @@ const IMG_NAMES = [
   'cur_gold', 'cur_sigil', 'cur_ember', 'prop_urn',
   ...['pillar', 'brazier', 'candles', 'tomb', 'shrine'].map(k => 'prop_' + k),
   ...Object.values(STAGE_ENV_LIST).flat(),
+  ...['dawn', 'crimson', 'phoenix', 'void', 'hallowed', 'frost'].map(k => 'item_wings_' + k), ...['heartling', 'hatchling', 'voidling', 'pumpkin', 'snowowl'].map(k => 'item_familiar_' + k),
   ...['undercroft', 'catacombs', 'cathedral', 'abyss'].flatMap(k => ['floor_' + k, 'stage_' + k]),
 ];
 const assetUrl = n => 'assets/' + n + '.webp';
@@ -1799,7 +1806,7 @@ const Platform = {
       const P_ = this.plugin('Purchases');
       if (P_) {
         await P_.configure({ apiKey: this.ios ? STORE_KEYS.revenuecatIos : STORE_KEYS.revenuecatAndroid });
-        const { products } = await P_.getProducts({ productIdentifiers: [...PACKS.map(p => p.sku), STARTER.sku, URN.sku, ...WING_PACKS.map(p => p.sku)] });
+        const { products } = await P_.getProducts({ productIdentifiers: [...PACKS.map(p => p.sku), STARTER.sku, URN.sku, ...WING_PACKS.map(p => p.sku), 'av_event_bundle'] });
         for (const p of products || []) this.prices[p.identifier] = p;
       }
       const A = this.plugin('AdMob');
@@ -1855,7 +1862,7 @@ function newRun(cls) {
   G.goldMul = (1 + G.meta.gold) * STAGES[G.stage].gold * (G.hard ? 1.5 : 1) * (1 + 0.01 * (SAVE.guildId ? SAVE.guildLv || 0 : 0)) * (G.mods.gold || 1) * (SAVE.guildId ? G.mods.guildGold || 1 : 1);
   P.rollCd = 0;
   const wi = itemById(SAVE.equipped.wings), fi = itemById(SAVE.equipped.familiar);
-  G.wingsR = wi ? wi.r : -1; G.famR = fi ? fi.r : -1; G.fam = fi ? { x: 0, y: -30, t: 0, cd: 1 } : null;
+  G.wingsR = wi ? wi.r : -1; G.famR = fi ? fi.r : -1; G.wingsArt = wi ? 'item_wings_' + (wi.skin && IMG['item_wings_' + wi.skin] ? wi.skin : wi.r) : null; G.famArt = fi ? 'item_familiar_' + (fi.skin && IMG['item_familiar_' + fi.skin] ? fi.skin : fi.r) : null; G.fam = fi ? { x: 0, y: -30, t: 0, cd: 1 } : null;
   P.maxFlasks = 3 + G.meta.flasks; P.flasks = P.maxFlasks;
   setFloor(STAGES[G.stage]);
   addWeapon(c.start);
@@ -2212,7 +2219,7 @@ function famUpdate(dt) {
   for (let i = 0; i < shots; i++) { const aa = a + (i - (shots - 1) / 2) * 0.18; G.proj.push({ kind: 'fam', x: f.x, y: f.y, vx: Math.cos(aa) * 480, vy: Math.sin(aa) * 480, r: 6, dmg: P.fam * (1 + P.lv * 0.04), pierce: G.famR >= 1 ? 2 : 1, life: 1, hit: new Set(), a: aa, rr: G.famR }); }
 }
 function drawFam() {
-  const f = G.fam, c = ctx, s = spr('item_familiar_' + G.famR, 30), bob = Math.sin(f.t * 5) * 2.5;
+  const f = G.fam, c = ctx, s = spr(G.famArt || 'item_familiar_' + G.famR, 30), bob = Math.sin(f.t * 5) * 2.5;
   c.fillStyle = 'rgba(0,0,0,0.28)'; ellipse(c, f.x, f.y + 42, 8, 3);
   c.save(); c.globalCompositeOperation = 'lighter'; glowAt(c, f.x, f.y - 12 + bob, 30, FAM_COL[G.famR], 0.35); c.restore();
   if (s) drawSpr(c, s, f.x, f.y + bob, P.fx < 0 ? -1 : 1); else { c.fillStyle = `rgb(${FAM_COL[G.famR]})`; circle(c, f.x, f.y - 10 + bob, 6); }
@@ -3274,7 +3281,7 @@ function drawPlayer() {
     P.walkAmt = (P.walkAmt || 0) + ((P.moving ? 1 : 0) - (P.walkAmt || 0)) * 0.25;
     const wa = P.walkAmt, bob = Math.abs(Math.cos(P.walkT)) * 1.8 * wa, lean = 0.07 * wa * dir;
     if (P.inv > 0 && Math.floor(P.inv * 20) % 2 === 0) c.globalAlpha = 0.5;
-    if (G.wingsR >= 0) { const ws = spr('item_wings_' + G.wingsR, 58); if (ws) blit(c, ws, P.x, P.y + 2 - bob, dir, lean * 0.5, 1 + Math.sin(G.t * (P.moving ? 9 : 3)) * 0.07, 1, 0); }
+    if (G.wingsR >= 0) { const ws = spr(G.wingsArt || 'item_wings_' + G.wingsR, 58); if (ws) blit(c, ws, P.x, P.y + 2 - bob, dir, lean * 0.5, 1 + Math.sin(G.t * (P.moving ? 9 : 3)) * 0.07, 1, 0); }
     blitWalk(c, hs, P.x, P.y + 10, dir, P.walkT, wa, lean + Math.sin(P.walkT) * 0.025 * wa, P.hurtT > 0 ? Math.min(0.8, P.hurtT * 2.5) : 0, wa > 0.5 ? 1 : 1 + Math.sin(G.t * 2.2) * 0.015);
     c.globalAlpha = 1; return;
   }
@@ -3857,7 +3864,8 @@ function portrait(cls) {
   });
 }
 const METAL = [['#b4afba', '#4a4650'], ['#c4d8f0', '#3a5276'], ['#dcc8f6', '#5a3c88'], ['#ffe09a', '#8a5a18']];
-function itemIcon(slot, r) {
+function itemIcon(slot, r, skin) {
+  if (skin && IMG[`item_${slot}_${skin}`]) return assetUrl(`item_${slot}_${skin}`);
   if (IMG[`item_${slot}_${r}`]) return assetUrl(`item_${slot}_${r}`);
   return cached('ico' + slot + r, () => {
     const [cv, c] = mkCanvas(64, 64), rc = RARITY[r].color, [m1, m2] = METAL[r];
@@ -4055,7 +4063,7 @@ function openShopChest10(c) {
   persist(); renderHub(); SND.init(); SND.chest();
   const best = items.reduce((a, b) => b.r > a.r || (b.r === a.r && b.aff.length > a.aff.length) ? b : a);
   openModal(`<div class="eyebrow">${c.name} × 10</div><h2>Your haul</h2>
-    <div class="multi">${items.map((it, k) => `<div class="mcard r${it.r}" style="--rc:${RARITY[it.r].color};animation-delay:${(k * 0.09).toFixed(2)}s"><img src="${itemIcon(it.slot, it.r)}" alt=""><b>${it.name}</b><span>${RARITY[it.r].name}</span></div>`).join('')}</div>
+    <div class="multi">${items.map((it, k) => `<div class="mcard r${it.r}" style="--rc:${RARITY[it.r].color};animation-delay:${(k * 0.09).toFixed(2)}s"><img src="${itemIcon(it.slot, it.r, it.skin)}" alt=""><b>${it.name}</b><span>${RARITY[it.r].name}</span></div>`).join('')}</div>
     <p class="muted">Best find: <b style="color:${RARITY[best.r].color}">${best.name}</b>. Everything went to your armory.</p>
     <div class="row"><button class="btn" id="mArm" style="padding:12px 24px;font-size:14px">View armory</button><button class="btn ghost" id="mClose">Close</button></div>`, m => {
     m.querySelector('#mClose').onclick = closeModal;
@@ -4253,7 +4261,7 @@ function finishDungeon(won) {
   else if (G.mode === 'sigil') { const k = G.crystal.hp / G.crystal.max; R.sigils = k > 0 ? Math.max(1, Math.round(crystalSigils(t) * (0.4 + 0.6 * k))) : 0; cleared = k >= 0.5; title = k > 0 ? 'CRYSTAL HELD' : 'CRYSTAL SHATTERED'; sub = k > 0 ? 'The crystal stands at ' + Math.round(k * 100) + '%.' : 'Nothing could be salvaged.'; }
   else if (G.mode === 'fam') {
     if (won) { const it = genItem(rollFam(t), 'familiar'); SAVE.items.push(it); cleared = true; title = 'EGG CLAIMED'; sub = 'A ' + RARITY[it.r].name.toLowerCase() + ' familiar hatched: ' + it.name + '.';
-      extra = `<span class="rw"><img src="${itemIcon('familiar', it.r)}" alt=""><b style="color:${RARITY[it.r].color}">${it.name}</b></span>`; }
+      extra = `<span class="rw"><img src="${itemIcon('familiar', it.r, it.skin)}" alt=""><b style="color:${RARITY[it.r].color}">${it.name}</b></span>`; }
     else { title = 'THE BROOD PREVAILS'; sub = 'The Den Mother still guards her egg.'; }
   } else {
     if (won) { const k = trialChest(t); R.claims = { [k]: 1 }; R.gold = 80 * t; cleared = true; title = 'TRIAL WON'; sub = 'Three bells silenced. A reliquary waits in the shop.'; addFeathers(4); }
@@ -4317,6 +4325,18 @@ const EVENT_CAL = [
   { id: 'emberfest', name: 'Ember Festival', start: '11-21', days: 12, glow: '255,170,70', cur: 'Festival Embers', icon: 'cur_gold', art: 'chest_ember_1', blurb: 'Double gold in every run. Spend it well.', mods: { gold: 2 }, prize: { claims: { ember: 1 } } },
   { id: 'winter', name: "Winter's Vigil", start: '12-12', days: 21, glow: '190,230,255', cur: 'Snowflames', icon: 'icon_w_ward', art: 'chest_iron_1', blurb: 'A gift waits in the snow every day, and the dark is gentler.', mods: { flame: 0.6 }, daily: { gold: 150, pts: 3 }, prize: { wings: 1 } },
 ];
+// limited-edition cosmetics: epic versions are earned, legendary only with a lot of play (Mythic milestone) or the event bundle
+const EVENT_SKINS = {
+  newyear: { wings: ['dawn', 'Wings of the First Dawn'] },
+  hearts: { wings: ['crimson', 'Crimson Heartwings'], fam: ['heartling', 'Heartling'] },
+  egghunt: { fam: ['hatchling', 'Ember Hatchling'] },
+  midsummer: { wings: ['phoenix', 'Midsummer Phoenix Wings'] },
+  rift: { wings: ['void', 'Voidrend Wings'], fam: ['voidling', 'Voidling'] },
+  hallowed: { wings: ['hallowed', 'Hallowed Bat Wings'], fam: ['pumpkin', 'Pumpkin Wisp'] },
+  winter: { wings: ['frost', 'Frostvigil Wings'], fam: ['snowowl', 'Snow Owl'] },
+};
+const EVENT_BUNDLE = { sku: 'av_event_bundle', sigils: 300 };
+function giveSkin(slot, skin, name, r) { const it = genItem(r, slot); it.skin = skin; it.name = name; SAVE.items.push(it); return it; }
 const FEATHERS = { id: 'feathers', name: 'Feathers of the Fallen', glow: '200,170,255', cur: 'Feathers', icon: 'item_wings_0', art: 'item_wings_2', blurb: 'Gather feathers from hordes and bosses to earn wings.', mods: {}, len: 14 * 864e5, epoch: Date.UTC(2026, 0, 5),
   miles: [{ f: 10, give: { gold: 300 } }, { f: 25, wings: 0 }, { f: 45, give: { sigils: 15 } }, { f: 70, wings: 1 }, { f: 100, give: { claims: { iron: 1 } } }, { f: 140, wings: 2 }, { f: 200, give: { claims: { ember: 1 } } }] };
 const WEEKENDS = [
@@ -4332,9 +4352,15 @@ function evWindow(ev, now) {
   for (const y of [d.getFullYear() - 1, d.getFullYear()]) { const from = new Date(y, mo - 1, da).getTime(), to = from + ev.days * 864e5; if (now >= from && now < to) return { from, to }; }
   return null;
 }
-function stdMiles(prize) { return [{ f: 10, give: { gold: 300 } }, { f: 25, give: { sigils: 10 } }, { f: 45, give: { claims: { iron: 1 } } }, { f: 70, egg: 3 }, { f: 100, give: { sigils: 25 } }, { f: 140, ...(prize.wings != null ? { wings: prize.wings } : prize.egg != null ? { egg: prize.egg } : { give: prize }) }, { f: 200, give: { claims: { ember: 1 }, sigils: 20 } }]; }
+function stdMiles(prize, sk) {
+  if (sk) { const W = sk.wings, Fm = sk.fam, top = W ? { slot: 'wings', skin: W[0], name: W[1] } : { slot: 'familiar', skin: Fm[0], name: Fm[1] };
+    return [{ f: 10, give: { gold: 300 } }, { f: 25, give: { sigils: 10 } }, { f: 45, give: { claims: { iron: 1 } } }, { f: 70, egg: 3 }, { f: 100, give: { sigils: 25 } },
+      { f: 160, skin: { ...top, r: 2 } }, { f: 240, give: { claims: { ember: 1 }, sigils: 20 } },
+      ...(Fm && W ? [{ f: 400, skin: { slot: 'familiar', skin: Fm[0], name: Fm[1], r: 2 } }] : [{ f: 400, give: { sigils: 40 } }]),
+      { f: 800, skin: { ...top, r: 3 }, mythic: true }]; }
+  return [{ f: 10, give: { gold: 300 } }, { f: 25, give: { sigils: 10 } }, { f: 45, give: { claims: { iron: 1 } } }, { f: 70, egg: 3 }, { f: 100, give: { sigils: 25 } }, { f: 140, ...(prize.wings != null ? { wings: prize.wings } : prize.egg != null ? { egg: prize.egg } : { give: prize }) }, { f: 200, give: { claims: { ember: 1 }, sigils: 20 } }]; }
 function activeEvent(now = Date.now()) {
-  for (const ev of (EVENT_REMOTE || EVENT_CAL)) { const w = evWindow(ev, now); if (w) return { ...ev, key: ev.id + '-' + new Date(w.from).getFullYear(), ends: w.to, miles: ev.miles || stdMiles(ev.prize || { claims: { iron: 1 } }) }; }
+  for (const ev of (EVENT_REMOTE || EVENT_CAL)) { const w = evWindow(ev, now); if (w) return { ...ev, key: ev.id + '-' + new Date(w.from).getFullYear(), ends: w.to, skins: EVENT_SKINS[ev.id] || ev.skins || null, miles: ev.miles || stdMiles(ev.prize || { claims: { iron: 1 } }, EVENT_SKINS[ev.id] || ev.skins) }; }
   const n = Math.floor((now - FEATHERS.epoch) / FEATHERS.len);
   return { ...FEATHERS, key: 'feathers-s' + n, ends: FEATHERS.epoch + (n + 1) * FEATHERS.len };
 }
@@ -4364,14 +4390,28 @@ function renderWingShop(el, inModal) {
     catch (e) { toast(e && e.userCancelled ? 'Purchase cancelled.' : 'Purchase not completed.'); b.disabled = false; }
   });
 }
+function renderEventBundle(el, ev) {
+  SAVE.evBought = SAVE.evBought || {};
+  const sk = ev.skins, owned = SAVE.evBought[ev.key], pr = Platform.prices[EVENT_BUNDLE.sku], can = Platform.canBuy() && pr;
+  const parts = [sk.wings && { slot: 'wings', skin: sk.wings[0], name: sk.wings[1] }, sk.fam && { slot: 'familiar', skin: sk.fam[0], name: sk.fam[1] }].filter(Boolean);
+  el.innerHTML = `<div class="evbundle"><div class="ebart">${parts.map(p => `<img src="${itemIcon(p.slot, 3, p.skin)}" alt="">`).join('')}</div>
+    <div class="ebtx"><span class="tag">Event bundle \u00b7 this event only</span><h3>${parts.map(p => 'Legendary ' + esc(p.name)).join(' + ')}</h3><p>+${EVENT_BUNDLE.sigils} sigils. Leaves when the event ends.</p></div>
+    ${owned ? '<span class="muted">Owned</span>' : can ? `<button class="btn" id="ebBuy">${pr.priceString}</button>` : '<p class="note">In the app</p>'}</div>`;
+  const b = el.querySelector('#ebBuy');
+  if (b) b.onclick = async () => {
+    b.disabled = true;
+    try { await Platform.purchase(EVENT_BUNDLE.sku); for (const p of parts) giveSkin(p.slot, p.skin, p.name, 3); SAVE.sigils += EVENT_BUNDLE.sigils; SAVE.evBought[ev.key] = true; persist(); renderHub(); toast('Legendary ' + parts.map(p => p.name).join(' and ') + ' added to your armory.'); openEvent(); }
+    catch (e) { toast(e && e.userCancelled ? 'Purchase cancelled.' : 'Purchase not completed.'); b.disabled = false; }
+  };
+}
 function openEvent() {
   const ev = activeEvent(), e = eventState(), wk = activeWeekend(), left = ev.ends - Date.now(), dd = Math.floor(left / 864e5), hh = Math.floor(left / 36e5) % 24;
   const top = ev.miles[ev.miles.length - 1].f, cur = esc(ev.cur);
   const rows = ev.miles.map((m, i) => {
     const got = e.got.includes(i), ready = e.f >= m.f && !got;
-    const icon = m.wings != null ? itemIcon('wings', m.wings) : m.egg != null ? itemIcon('familiar', Math.min(3, Math.floor(m.egg / 3))) : m.give.claims ? chestArt(Object.keys(m.give.claims)[0], false) : assetUrl(m.give.gold ? 'cur_gold' : 'cur_sigil');
-    const label = m.wings != null ? SLOTS.wings.names[m.wings][0] : m.egg != null ? 'Familiar egg (tier ' + m.egg + ' odds)' : rewardLine(m.give);
-    return `<div class="evrow${got ? ' got' : ready ? ' ready' : ''}"><b class="evf">${m.f}</b><img src="${icon}" alt=""><span>${label}</span>${got ? '<em>Claimed</em>' : ready ? `<button class="buy" data-ev="${i}">Claim</button>` : `<em>${m.f - e.f} to go</em>`}</div>`;
+    const icon = m.skin ? itemIcon(m.skin.slot, m.skin.r, m.skin.skin) : m.wings != null ? itemIcon('wings', m.wings) : m.egg != null ? itemIcon('familiar', Math.min(3, Math.floor(m.egg / 3))) : m.give.claims ? chestArt(Object.keys(m.give.claims)[0], false) : assetUrl(m.give.gold ? 'cur_gold' : 'cur_sigil');
+    const label = m.skin ? `<b style="color:${RARITY[m.skin.r].color}">${RARITY[m.skin.r].name}</b> ${esc(m.skin.name)}${m.mythic ? ' <i class="mythic">Mythic</i>' : ''}` : m.wings != null ? SLOTS.wings.names[m.wings][0] : m.egg != null ? 'Familiar egg (tier ' + m.egg + ' odds)' : rewardLine(m.give);
+    return `<div class="evrow${got ? ' got' : ready ? ' ready' : ''}${m.mythic ? ' myth' : ''}"><b class="evf">${m.f}</b><img src="${icon}" alt=""><span>${label}</span>${got ? '<em>Claimed</em>' : ready ? `<button class="buy" data-ev="${i}">Claim</button>` : `<em>${m.f - e.f} to go</em>`}</div>`;
   }).join('');
   const daily = ev.daily ? `<div class="evrow${e.day === todayKey() ? ' got' : ' ready'}"><b class="evf">✶</b><img src="${assetUrl('chest_wood_1')}" alt=""><span>Daily gift: ${rewardLine({ gold: ev.daily.gold })} + ${ev.daily.pts} ${cur}</span>${e.day === todayKey() ? '<em>Come back tomorrow</em>' : '<button class="buy" id="evDaily">Open</button>'}</div>` : '';
   openModal(`<div class="mhero"><div class="cc-rays" style="--cG:${ev.glow}"></div><img src="${assetUrl(ev.art || ev.icon)}" alt=""></div>
@@ -4381,14 +4421,16 @@ function openEvent() {
     <div class="evbar"><i style="width:${Math.min(100, e.f / top * 100)}%"></i><b><img src="${assetUrl(ev.icon)}" alt="" class="evcur"> ${e.f} ${cur}</b></div>
     <div class="evlist">${daily}${rows}</div>
     <div class="evtip">${cur}: +3 per horde broken, +2 per boss, +6 for a clear, +2 per dungeon run, +4 per Trial of Bells win${ev.drop ? ', and they drop from slain foes' : ''}. Hard mode earns 50% more.</div>
-    <div id="evShop"></div>
+    ${ev.skins ? '<div id="evBundle"></div>' : ''}<div id="evShop"></div>
     <div class="row"><button class="btn ghost" id="mClose">Close</button></div>`, m => {
     m.querySelector('#mClose').onclick = closeModal;
+    if (ev.skins) renderEventBundle(m.querySelector('#evBundle'), ev);
     const dg = m.querySelector('#evDaily'); if (dg) dg.onclick = () => { if (e.day === todayKey()) return; e.day = todayKey(); e.f += ev.daily.pts; giveReward({ gold: ev.daily.gold }); persist(); SND.init(); SND.chest(); toast('A gift from the snow: ' + rewardLine({ gold: ev.daily.gold }) + '.'); renderHub(); openEvent(); };
     m.querySelectorAll('[data-ev]').forEach(b => b.onclick = () => {
       const i = +b.dataset.ev, ms = ev.miles[i]; if (e.got.includes(i) || e.f < ms.f) return;
       e.got.push(i); let msg;
-      if (ms.wings != null) { const it = giveWings(ms.wings); msg = it.name + ' added to your armory.'; }
+      if (ms.skin) { const it = giveSkin(ms.skin.slot, ms.skin.skin, ms.skin.name, ms.skin.r); msg = it.name + ' (' + RARITY[it.r].name + ') added to your armory.'; }
+      else if (ms.wings != null) { const it = giveWings(ms.wings); msg = it.name + ' added to your armory.'; }
       else if (ms.egg != null) { const it = giveEgg(ms.egg); msg = 'An egg hatched: ' + it.name + ' (' + RARITY[it.r].name + ').'; }
       else { giveReward(ms.give); msg = 'Claimed ' + rewardLine(ms.give) + '.'; }
       persist(); SND.init(); SND.chest(); toast(msg); renderHub(); openEvent();
@@ -4708,7 +4750,7 @@ async function realmAcct(el) {
 }
 
 /* merging */
-function mergeGroups() { const g = {}; for (const it of SAVE.items) { if (it.r >= 3 || it.slot === 'wings') continue; const k = it.slot + ':' + it.r; (g[k] = g[k] || []).push(it); } return Object.values(g).filter(a => a.length >= 3).sort((a, b) => b[0].r - a[0].r); }
+function mergeGroups() { const g = {}; for (const it of SAVE.items) { if (it.r >= 3 || it.slot === 'wings' || it.skin) continue; const k = it.slot + ':' + it.r; (g[k] = g[k] || []).push(it); } return Object.values(g).filter(a => a.length >= 3).sort((a, b) => b[0].r - a[0].r); }
 function doMerge(group) {
   const pick = group.slice().sort((a, b) => (isEquipped(a) - isEquipped(b)) || a.plus - b.plus).slice(0, 3);
   const wasEq = pick.some(isEquipped), slot = pick[0].slot;
@@ -4722,7 +4764,7 @@ function openMerge() {
   const intro = '<p class="muted">Three pieces of the same slot and rarity become one piece of the next rarity. The new piece keeps the highest upgrade among them.</p>';
   if (!groups.length) { openModal(`<h2>Merge gear</h2>${intro}<p style="margin:0">Nothing to merge yet. Open chests to collect more gear.</p><div class="row"><button class="btn ghost" id="mClose">Close</button></div>`, m => { m.querySelector('#mClose').onclick = closeModal; }); return; }
   openModal(`<h2>Merge gear</h2>${intro}<div class="mlist">${groups.map((g, k) => { const it = g[0], R = RARITY[it.r], N = RARITY[it.r + 1];
-    return `<div class="mrow"><img src="${itemIcon(it.slot, it.r)}" alt=""><span><b style="color:${R.color}">${g.length} ${R.name} ${SLOTS[it.slot].name}s</b><br><span class="muted">3 become 1 <b style="color:${N.color}">${N.name}</b></span></span><img src="${itemIcon(it.slot, it.r + 1)}" alt=""><button class="buy" data-k="${k}">Merge</button></div>`; }).join('')}</div>
+    return `<div class="mrow"><img src="${itemIcon(it.slot, it.r, it.skin)}" alt=""><span><b style="color:${R.color}">${g.length} ${R.name} ${SLOTS[it.slot].name}s</b><br><span class="muted">3 become 1 <b style="color:${N.color}">${N.name}</b></span></span><img src="${itemIcon(it.slot, it.r + 1)}" alt=""><button class="buy" data-k="${k}">Merge</button></div>`; }).join('')}</div>
     <div class="row"><button class="btn ghost" id="mClose">Done</button></div>`, m => {
     m.querySelector('#mClose').onclick = closeModal;
     m.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { const res = doMerge(groups[+b.dataset.k]); SND.init(); SND.chest(); renderHub(); showMerged(res); });
@@ -4730,7 +4772,7 @@ function openMerge() {
 }
 function showMerged(it) {
   const R = RARITY[it.r];
-  openModal(`<div class="eyebrow">Merged</div><div class="reveal lit" style="--rc:${R.color}"><div class="burst"></div><img class="ico" src="${itemIcon(it.slot, it.r)}" alt="" style="width:120px;height:120px;position:relative"></div>
+  openModal(`<div class="eyebrow">Merged</div><div class="reveal lit" style="--rc:${R.color}"><div class="burst"></div><img class="ico" src="${itemIcon(it.slot, it.r, it.skin)}" alt="" style="width:120px;height:120px;position:relative"></div>
     <div class="eyebrow" style="color:${R.color}">${R.name} ${SLOTS[it.slot].name}</div><h2 style="color:${R.color}">${it.name}${it.plus ? ' +' + it.plus : ''}</h2>
     <ul class="statlist" style="--rc:${R.color}">${itemStats(it).map(([k, v]) => `<li>${STAT_TEXT[k](v)}</li>`).join('')}</ul>
     <div class="row"><button class="btn" id="mMore" style="padding:12px 24px;font-size:14px">${mergeGroups().length ? 'Merge more' : 'Done'}</button></div>`, m => {
@@ -4759,7 +4801,7 @@ function renderArmory() {
   $('dollL').innerHTML = ['helm', 'armor', 'gloves', 'boots'].map(slotCard).join('');
   $('dollR').innerHTML = ['ring', 'charm', 'wings', 'familiar'].map(slotCard).join('');
   { const wi = itemById(SAVE.equipped.wings), fi = itemById(SAVE.equipped.familiar), dw = $('dollWings'), df = $('dollFam');
-    dw.hidden = !wi; if (wi) dw.src = itemIcon('wings', wi.r); df.hidden = !fi; if (fi) df.src = itemIcon('familiar', fi.r); }
+    dw.hidden = !wi; if (wi) dw.src = itemIcon('wings', wi.r, wi.skin); df.hidden = !fi; if (fi) df.src = itemIcon('familiar', fi.r, fi.skin); }
   renderOrigins();
   $('dollImg').src = bigPortrait(SAVE.cls); $('dollName').textContent = CLASSES[SAVE.cls].name;
   const m = metaMods(), c = CLASSES[SAVE.cls];
@@ -4989,7 +5031,7 @@ function drawHero(t) {
   for (let i = 0; i < 16; i++) { const a = i / 16 * TAU + t * 0.4; c.fillStyle = `rgba(${gc},0.9)`; c.fillRect(Math.cos(a) * hh * 0.37 - 2, Math.sin(a) * hh * 0.37 - 2, 4, 4); }
   c.restore();
   c.fillStyle = 'rgba(0,0,0,0.5)'; c.beginPath(); c.ellipse(cx, fy, hw * 0.32, hh * 0.05, 0, 0, TAU); c.fill();
-  const wIt = itemById(SAVE.equipped.wings), wI = wIt && IMG['item_wings_' + wIt.r];
+  const wIt = itemById(SAVE.equipped.wings), wI = wIt && (IMG['item_wings_' + wIt.skin] || IMG['item_wings_' + wIt.r]);
   if (wI) { const wh = hh * 0.92, ww = wI.width / wI.height * wh; c.save(); c.translate(cx, fy - hh * 0.06); c.scale(1 + Math.sin(t * 3) * 0.04, 1); c.drawImage(wI, -ww / 2, -wh, ww, wh); c.restore(); }
   // hero aura motes rising around her, a gentle breath and sway, and a periodic blade glint
   c.globalCompositeOperation = 'lighter';
@@ -4998,7 +5040,7 @@ function drawHero(t) {
   c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
   c.save(); c.translate(cx, fy + 2); c.rotate(Math.sin(t * 0.9) * 0.012); c.scale(1 + Math.sin(t * 2) * 0.006, 1 + Math.sin(t * 2) * 0.014); c.drawImage(hsI, -hw / 2, -hh, hw, hh); c.restore();
   const gl = (t * 0.25) % 1; if (gl < 0.12) { c.globalCompositeOperation = 'lighter'; const k2 = Math.sin(gl / 0.12 * Math.PI); glowAt(c, cx + hw * 0.32, fy - hh * 0.28, hh * 0.22, '255,240,200', 0.7 * k2); c.globalCompositeOperation = 'source-over'; }
-  const fIt = itemById(SAVE.equipped.familiar), fI = fIt && IMG['item_familiar_' + fIt.r];
+  const fIt = itemById(SAVE.equipped.familiar), fI = fIt && (IMG['item_familiar_' + fIt.skin] || IMG['item_familiar_' + fIt.r]);
   if (fI) { const fh = hh * 0.34, fw = fI.width / fI.height * fh, fx = cx + hw * 0.55, fyy = fy - hh * 0.78 + Math.sin(t * 2.6) * 6;
     c.globalCompositeOperation = 'lighter'; glowAt(c, fx, fyy + fh / 2, fh * 0.9, FAM_COL[fIt.r], 0.35); c.globalCompositeOperation = 'source-over'; c.drawImage(fI, fx - fw / 2, fyy, fw, fh); }
   c.globalCompositeOperation = 'lighter';
@@ -5086,7 +5128,7 @@ function confirmBuy(title, text, cost, onOk) {
 
 function itemCard(it) {
   const st = itemStats(it)[0], eq = isEquipped(it);
-  return `<button class="item r${it.r}" data-id="${it.id}" data-slot="${SLOTS[it.slot].name}${it.plus ? ' +' + it.plus : ''}" style="--rc:${RARITY[it.r].color}"><img class="ico" src="${itemIcon(it.slot, it.r)}" alt=""><span class="itxt"><span class="slot">${SLOTS[it.slot].name}${eq ? ' · Equipped' : ''}</span>
+  return `<button class="item r${it.r}" data-id="${it.id}" data-slot="${SLOTS[it.slot].name}${it.plus ? ' +' + it.plus : ''}" style="--rc:${RARITY[it.r].color}"><img class="ico" src="${itemIcon(it.slot, it.r, it.skin)}" alt=""><span class="itxt"><span class="slot">${SLOTS[it.slot].name}${eq ? ' · Equipped' : ''}</span>
     <b>${it.name}${it.plus ? ' +' + it.plus : ''}</b><span class="sum">${STAT_TEXT[st[0]](st[1])}${it.aff.length ? ' · ' + it.aff.length + ' more' : ''}</span></span></button>`;
 }
 $('mergeBtn').addEventListener('click', openMerge);
@@ -5099,7 +5141,7 @@ $('salvageCommons').addEventListener('click', () => {
 function openItem(id) {
   const it = itemById(id); if (!it) { closeModal(); return; }
   const R = RARITY[it.r], eq = isEquipped(it), cur = itemById(SAVE.equipped[it.slot]), cost = upCost(it), maxed = it.plus >= 10;
-  openModal(`<div style="display:flex;align-items:center;gap:14px"><img class="ico big" src="${itemIcon(it.slot, it.r)}" alt="" style="width:72px;height:72px"><div>
+  openModal(`<div style="display:flex;align-items:center;gap:14px"><img class="ico big" src="${itemIcon(it.slot, it.r, it.skin)}" alt="" style="width:72px;height:72px"><div>
     <div class="eyebrow" style="color:${R.color}">${R.name} ${SLOTS[it.slot].name}</div>
     <h2 style="color:${it.r ? R.color : 'var(--bone)'}">${it.name}${it.plus ? ' +' + it.plus : ''}</h2></div></div>
     <ul class="statlist" style="--rc:${R.color}">${itemStats(it).map(([k, v]) => `<li>${STAT_TEXT[k](v)}</li>`).join('')}</ul>

@@ -28,6 +28,7 @@ The app id is `com.thorisathot.ashenvigil` (set in `capacitor.config.json` and `
 | Pilgrim's Bundle (IAP, one-time) | Shop, top card | Non-consumable or one-time consumable product `av_starter` |
 | Ember Urn (IAP, consumable) | Play tab | Product `av_urn`; it gives whatever sigils the urn holds, so price it as a mid-size pack |
 | Wings (IAP, non-consumable) | Shop tab and Event | Products `av_wings_abyssal` (epic wings + 100 sigils) and `av_wings_seraph` (legendary wings + 300 sigils). Wings are otherwise only earned from the Feathers of the Fallen event |
+| Event bundle (IAP, consumable) | Event window, during events with cosmetics | Product `av_event_bundle`: the current event's legendary wings and/or familiar plus 300 sigils. One purchase per event (tracked in the save). Price as a premium item, for example US$14.99 |
 | Rewarded ad: double run gold | End-of-run screen | AdMob rewarded ad unit |
 | Rewarded ad: skip free-chest timer | Shop, Daily Offering | Same ad unit |
 
