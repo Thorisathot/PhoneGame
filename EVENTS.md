@@ -86,3 +86,23 @@ Events can be changed live from the Firebase console:
 - **Event bundles** in the shop: a themed sigil pack with an event-only cosmetic, on sale only during the event.
 - **Limited event stages:** a themed arena (pumpkin patch, frozen cathedral) with its own boss.
 - **Anniversary week** on the launch date: every weekend twist active at once.
+
+## Event summon (gacha banner)
+
+Each event that has limited cosmetics also has a **Summon** tab in the event screen.
+
+| Result | Chance |
+|---|---|
+| Legendary event cosmetic (wings first, then the familiar) | 1.2% |
+| Epic event cosmetic | 6% |
+| Epic gear | 12% |
+| Rare gear | 35% |
+| 20 sigils or 400 gold | 45.8% |
+
+- **Pity:** from summon 66 the legendary chance rises by 6% each summon, and summon 80 always gives a legendary. Pity is kept for the whole event and resets when a legendary drops.
+- **Duplicates:** once a player owns both legendary cosmetics, further legendaries become 300 sigils.
+- **Cost:** ×1 costs 100 sigils or 1 free ticket; ×10 costs 900 sigils. Players earn 1 free ticket per 40 event points.
+- **Full armory:** gear rolls become gold instead.
+- Tuning lives in the `SUMMON` constant in `index.html`.
+
+**Legal note.** The odds are shown in game (the Odds panel), as Apple and Google require. Paid random rewards are restricted in Belgium, and the Netherlands has looked at them closely. Before launching there, either remove the summon tab in those regions or make it ticket-only. Summons are bought with sigils, which can be bought with real money, so they count as paid loot boxes.

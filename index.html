@@ -966,6 +966,111 @@ button:focus-visible{outline:3px solid #ffc04a;outline-offset:2px}
   .card .top>div{text-align:left}
   .card .cardico{width:56px;height:56px}
 }
+
+/* ---- event hub ---- */
+.sheet.evsheet{padding:0;gap:0;overflow:hidden;max-width:620px}
+.evhub{display:flex;flex-direction:column;gap:12px;padding-bottom:16px}
+.evhub>*:not(.evhero){margin-inline:16px}
+.evhero{position:relative;aspect-ratio:3/2;max-height:46vh;width:100%;background-size:cover;background-position:center 30%;overflow:hidden;display:flex;align-items:flex-end}
+.evhero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,6,14,.15) 0%,transparent 35%,rgba(8,6,14,.55) 70%,var(--stone) 100%),radial-gradient(120% 80% at 50% 110%,rgba(var(--eg),.35),transparent 60%);pointer-events:none}
+.evparts{position:absolute;inset:0;pointer-events:none;z-index:1}
+.evparts i{position:absolute;bottom:-10px;width:var(--s);height:var(--s);border-radius:50%;background:rgb(var(--eg));box-shadow:0 0 8px 2px rgba(var(--eg),.8);opacity:0;animation:evRise linear infinite}
+.evparts.snow i{top:-10px;bottom:auto;background:#fff;box-shadow:0 0 6px rgba(255,255,255,.8);animation-name:evFall}
+@keyframes evRise{0%{transform:translate(0,0);opacity:0}15%{opacity:.9}100%{transform:translate(18px,-60vh);opacity:0}}
+@keyframes evFall{0%{transform:translate(0,0);opacity:0}15%{opacity:.9}100%{transform:translate(-20px,60vh);opacity:0}}
+.evtimer{position:absolute;top:12px;left:12px;z-index:2;display:flex;gap:6px;align-items:baseline;padding:6px 12px;border-radius:999px;background:rgba(8,6,14,.72);border:1px solid rgba(var(--eg),.7);box-shadow:0 0 14px rgba(var(--eg),.35);font-weight:800;color:#fff}
+.evtimer span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#d8cfe6}
+.evtimer b{font-variant-numeric:tabular-nums;font-size:14px}
+.evwk{position:absolute;top:12px;right:12px;z-index:2;padding:6px 12px;border-radius:999px;background:linear-gradient(180deg,#ffd76a,#e09a2a);color:#3a1c00;font-weight:900;font-size:12px;box-shadow:0 3px 0 #8a5410}
+.evtitle{position:relative;z-index:2;padding:0 18px 6px;text-align:left}
+.evtitle small{display:inline-block;font-weight:900;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgb(var(--eg));text-shadow:0 0 10px rgba(var(--eg),.8),0 1px 2px #000}
+.evtitle h2{margin:2px 0 4px;font-size:clamp(26px,7vw,38px);line-height:1.05;color:#fff7e8;text-shadow:0 3px 0 rgba(0,0,0,.6),0 0 24px rgba(var(--eg),.7)}
+.evtitle p{margin:0;font-size:14px;color:#e8e0f0;text-shadow:0 1px 3px #000;max-width:46ch}
+.evcurbar{display:flex;align-items:center;gap:10px;padding:8px 10px 8px 8px;border-radius:14px;background:linear-gradient(90deg,rgba(var(--eg),.22),rgba(255,255,255,.03));border:1px solid rgba(var(--eg),.45)}
+.evcurbar img{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(var(--eg),.8))}
+.evcurbar b{font-family:var(--display);font-size:24px;color:#fff;font-variant-numeric:tabular-nums}
+.evcurbar span{color:var(--ash);font-weight:700;flex:1}
+.evhow{font:inherit;font-weight:800;font-size:12px;padding:7px 12px;border-radius:999px;border:1px solid rgba(var(--eg),.6);background:rgba(8,6,14,.5);color:#fff;cursor:pointer}
+.evhowbox{display:flex;flex-wrap:wrap;gap:6px}
+.evhowbox span{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:999px;background:var(--stone-2);border:1px solid var(--line);font-size:12px;color:#ddd}
+.evhowbox img{width:24px;height:24px;object-fit:cover;border-radius:50%}
+.evhowbox b{color:rgb(var(--eg))}
+.evhowbox em{width:100%;font-size:12px;color:var(--ash)}
+.evtabs{display:grid!important;grid-template-columns:1fr 1fr;width:auto!important}
+.tdot{font-style:normal;display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 4px;margin-left:4px;border-radius:9px;background:#e0443a;color:#fff;font-size:11px;font-weight:900}
+#evBody{display:flex;flex-direction:column;gap:12px}
+.evshow{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px;align-items:stretch}
+.evprize{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:14px 8px 10px;border-radius:16px;background:radial-gradient(90% 70% at 50% 35%,color-mix(in srgb,var(--rc) 35%,transparent),var(--stone) 75%);border:1px solid color-mix(in srgb,var(--rc) 60%,transparent)}
+.evprize .pglow{position:absolute;inset:-40%;background:conic-gradient(from 0deg,transparent 0 20deg,color-mix(in srgb,var(--rc) 30%,transparent) 30deg,transparent 40deg 110deg,color-mix(in srgb,var(--rc) 30%,transparent) 120deg,transparent 130deg 200deg,color-mix(in srgb,var(--rc) 30%,transparent) 210deg,transparent 220deg 290deg,color-mix(in srgb,var(--rc) 30%,transparent) 300deg,transparent 310deg);animation:spin 14s linear infinite;opacity:.7}
+.evprize.myth img{width:96px;height:96px}.evprize img{position:relative;width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 0 12px var(--rc));animation:bob 3s ease-in-out infinite}
+.evprize b{position:relative;font-family:var(--display);font-size:12px;line-height:1.15;color:var(--rc)}
+.evprize span{position:relative;font-size:12px;color:#ddd}
+.evprize.myth{box-shadow:0 0 26px -6px var(--rc)}
+.evdaily{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:var(--stone-2);border:1px solid var(--line)}
+.evdaily img{width:40px;height:40px;object-fit:contain}
+.evdaily div{flex:1;display:flex;flex-direction:column}
+.evdaily span{font-size:12px;color:var(--ash)}
+.evdaily em{font-size:12px;color:var(--ash)}
+.evdaily:not(.got){border-color:rgba(var(--eg),.7);box-shadow:0 0 16px -6px rgba(var(--eg),.9)}
+.road{position:relative;display:flex;gap:4px;overflow-x:auto;padding:8px 6px 10px;scroll-snap-type:x proximity;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.rline{position:absolute;left:50px;top:56px;height:6px;border-radius:3px;background:rgba(255,255,255,.1);width:calc(var(--n,8) * 92px)}
+.rline i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,rgba(var(--eg),.6),rgb(var(--eg)));box-shadow:0 0 10px rgba(var(--eg),.8)}
+.rnode{position:relative;flex:0 0 88px;display:flex;flex-direction:column;align-items:center;gap:4px;font:inherit;color:inherit;background:none;border:0;padding:0;cursor:default;scroll-snap-align:center}
+.rpt{font-weight:900;font-size:12px;color:var(--ash);font-variant-numeric:tabular-nums}
+.rcircle{position:relative;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#3a3050,#1a1426);border:3px solid #4a4060;z-index:1}
+.rcircle img{width:46px;height:46px;object-fit:contain;filter:grayscale(.55) brightness(.75)}
+.rlab{font-size:11px;line-height:1.2;text-align:center;color:var(--ash);max-width:86px}
+.rnode.prize .rcircle{width:70px;height:70px;border-color:#b07ae0;margin-top:-4px}
+.rnode.myth .rcircle{border-color:#eea84a;box-shadow:0 0 18px rgba(238,168,74,.7)}
+.rnode.got .rcircle{border-color:rgb(var(--eg))}
+.rnode.got .rcircle img{filter:none;opacity:.55}
+.rcheck{position:absolute;right:-4px;bottom:-4px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#5cc23a;color:#fff;font-style:normal;font-size:12px;border:2px solid var(--stone)}
+.rnode.ready{cursor:pointer}
+.rnode.ready .rpt{color:#fff}
+.rnode.ready .rcircle{border-color:#ffd76a;box-shadow:0 0 0 0 rgba(255,215,106,.7);animation:rpulse 1.4s ease-out infinite}
+.rnode.ready .rcircle img{filter:none;animation:bob 1.6s ease-in-out infinite}
+.rnode.ready .rlab{color:#fff}
+.rclaim{margin-top:2px;padding:3px 10px;border-radius:999px;background:linear-gradient(180deg,#a6ec6a,#3a9426);color:#fff;font-weight:900;font-size:11px;box-shadow:0 2px 0 #22601a}
+@keyframes rpulse{70%{box-shadow:0 0 0 12px rgba(255,215,106,0)}100%{box-shadow:0 0 0 0 rgba(255,215,106,0)}}
+/* summon */
+.sumban{position:relative;overflow:hidden;min-height:210px;border-radius:18px;background-size:cover;background-position:center;display:flex;align-items:flex-end;border:1px solid rgba(var(--eg),.6);box-shadow:0 0 26px -8px rgba(var(--eg),.9)}
+.sumban::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,6,14,.92) 0%,rgba(8,6,14,.55) 55%,rgba(8,6,14,.1)),radial-gradient(60% 80% at 80% 50%,rgba(var(--eg),.45),transparent 70%)}
+.sumfeat{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;align-items:center}
+.sumfeat img{width:clamp(96px,26vw,140px);height:clamp(96px,26vw,140px);object-fit:contain;filter:drop-shadow(0 0 16px rgba(238,168,74,.9));animation:bob 3s ease-in-out infinite}
+.sumfeat img+img{width:clamp(70px,18vw,100px);height:clamp(70px,18vw,100px);margin-left:-30px;animation-delay:-1.5s}
+.sumtx{position:relative;padding:16px;max-width:60%}
+.sumtx small{font-weight:900;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#eea84a}
+.sumtx h3{margin:4px 0;font-size:20px;line-height:1.15;color:#fff7e8;text-shadow:0 0 16px rgba(238,168,74,.6)}
+.sumtx p{margin:0;font-size:13px;color:#e0d8ea}
+.sumtx p b{color:#eea84a}
+.pitybar{position:relative;height:22px;border-radius:11px;background:rgba(255,255,255,.08);border:1px solid var(--line);overflow:hidden}
+.pitybar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#8a5410,#eea84a)}
+.pitybar span{position:relative;display:block;text-align:center;font-size:12px;font-weight:800;line-height:20px;color:#fff;text-shadow:0 1px 2px #000}
+.sumbtns{display:grid;grid-template-columns:1fr 1.2fr;gap:10px}
+.sumbtn{flex-direction:column;gap:2px!important;padding:10px 8px!important;font-size:16px!important;letter-spacing:.04em!important}.sumbtn small{font-family:var(--body);font-size:12px;font-weight:800;letter-spacing:0;display:inline-flex;align-items:center;gap:4px}.sumbtn small .coin{font-size:12px}
+.sumbtn.big{background:linear-gradient(180deg,#ffd76a,#e09a2a 55%,#b06a10)!important;box-shadow:0 4px 0 #6a3a08,inset 0 2px 0 rgba(255,255,255,.45)!important;color:#3a1c00!important;text-shadow:0 1px 0 rgba(255,255,255,.4)!important}
+.odds{font-size:13px;color:var(--ash)}
+.odds summary{cursor:pointer;font-weight:800;color:#ddd}
+.odds table{width:100%;border-collapse:collapse;margin:8px 0}
+.odds td{padding:5px 4px;border-bottom:1px solid var(--line)}
+.odds td:last-child{text-align:right;font-variant-numeric:tabular-nums;color:#fff}
+.sumres{position:relative;display:flex;flex-direction:column;gap:14px}
+.sumgrid{grid-template-columns:repeat(5,minmax(0,1fr))}
+.sumgrid .mcard span{font-size:10px}
+.sumres.legend .mcard.r3{animation:dealIn .45s cubic-bezier(.2,.8,.2,1) both,legGlow 1.2s ease-in-out infinite alternate}
+@keyframes legGlow{to{box-shadow:0 0 32px 2px var(--rc)}}
+.sumflash{position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle,rgba(255,220,140,.95),rgba(238,168,74,.4) 40%,transparent 70%);animation:sflash 1.1s ease-out forwards;z-index:5}
+@keyframes sflash{0%{opacity:1}100%{opacity:0}}
+@media (max-width:560px){.sumgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.evtitle p{font-size:13px}}
+/* play-screen event chip */
+.evline{pointer-events:auto}
+.evchip{display:flex;flex-direction:column;align-items:flex-start;gap:0;min-width:180px;padding:7px 14px;border-radius:14px;border:1px solid rgba(var(--eg),.85);background-size:cover;background-position:center 35%;color:#fff;font:inherit;text-align:left;cursor:pointer;box-shadow:0 0 16px -2px rgba(var(--eg),.7),0 4px 10px rgba(0,0,0,.5)}
+.evchip b{font-family:var(--display);font-size:14px;text-shadow:0 1px 3px #000}
+.evchip small{font-size:11px;font-weight:800;color:rgb(var(--eg));text-shadow:0 1px 2px #000}
+.evchip.hot{animation:chipPulse 1.6s ease-in-out infinite}
+.evchip.hot small{color:#ffd76a}
+@keyframes chipPulse{50%{box-shadow:0 0 26px 2px rgba(var(--eg),.95),0 4px 10px rgba(0,0,0,.5)}}
+@media (prefers-reduced-motion:reduce){.evparts,.evprize .pglow{display:none}.evchip.hot,.rnode.ready .rcircle,.rnode.ready .rcircle img,.evprize img,.sumfeat img{animation:none}}
 </style>
 
 <canvas id="game" aria-label="Game view"></canvas>
@@ -4404,39 +4509,121 @@ function renderEventBundle(el, ev) {
     catch (e) { toast(e && e.userCancelled ? 'Purchase cancelled.' : 'Purchase not completed.'); b.disabled = false; }
   };
 }
-function openEvent() {
-  const ev = activeEvent(), e = eventState(), wk = activeWeekend(), left = ev.ends - Date.now(), dd = Math.floor(left / 864e5), hh = Math.floor(left / 36e5) % 24;
-  const top = ev.miles[ev.miles.length - 1].f, cur = esc(ev.cur);
-  const rows = ev.miles.map((m, i) => {
-    const got = e.got.includes(i), ready = e.f >= m.f && !got;
-    const icon = m.skin ? itemIcon(m.skin.slot, m.skin.r, m.skin.skin) : m.wings != null ? itemIcon('wings', m.wings) : m.egg != null ? itemIcon('familiar', Math.min(3, Math.floor(m.egg / 3))) : m.give.claims ? chestArt(Object.keys(m.give.claims)[0], false) : assetUrl(m.give.gold ? 'cur_gold' : 'cur_sigil');
-    const label = m.skin ? `<b style="color:${RARITY[m.skin.r].color}">${RARITY[m.skin.r].name}</b> ${esc(m.skin.name)}${m.mythic ? ' <i class="mythic">Mythic</i>' : ''}` : m.wings != null ? SLOTS.wings.names[m.wings][0] : m.egg != null ? 'Familiar egg (tier ' + m.egg + ' odds)' : rewardLine(m.give);
-    return `<div class="evrow${got ? ' got' : ready ? ' ready' : ''}${m.mythic ? ' myth' : ''}"><b class="evf">${m.f}</b><img src="${icon}" alt=""><span>${label}</span>${got ? '<em>Claimed</em>' : ready ? `<button class="buy" data-ev="${i}">Claim</button>` : `<em>${m.f - e.f} to go</em>`}</div>`;
-  }).join('');
-  const daily = ev.daily ? `<div class="evrow${e.day === todayKey() ? ' got' : ' ready'}"><b class="evf">✶</b><img src="${assetUrl('chest_wood_1')}" alt=""><span>Daily gift: ${rewardLine({ gold: ev.daily.gold })} + ${ev.daily.pts} ${cur}</span>${e.day === todayKey() ? '<em>Come back tomorrow</em>' : '<button class="buy" id="evDaily">Open</button>'}</div>` : '';
-  openModal(`<div class="mhero"><div class="cc-rays" style="--cG:${ev.glow}"></div><img src="${assetUrl(ev.art || ev.icon)}" alt=""></div>
-    <div class="mribbon">${esc(ev.name)}</div>
-    <p class="muted" style="text-align:center">${esc(ev.blurb)} Ends in ${dd}d ${hh}h.</p>
-    ${wk ? `<div class="evweek"><b>${esc(wk.name)}</b> ${esc(wk.blurb)}</div>` : ''}
-    <div class="evbar"><i style="width:${Math.min(100, e.f / top * 100)}%"></i><b><img src="${assetUrl(ev.icon)}" alt="" class="evcur"> ${e.f} ${cur}</b></div>
-    <div class="evlist">${daily}${rows}</div>
-    <div class="evtip">${cur}: +3 per horde broken, +2 per boss, +6 for a clear, +2 per dungeon run, +4 per Trial of Bells win${ev.drop ? ', and they drop from slain foes' : ''}. Hard mode earns 50% more.</div>
-    ${ev.skins ? '<div id="evBundle"></div>' : ''}<div id="evShop"></div>
-    <div class="row"><button class="btn ghost" id="mClose">Close</button></div>`, m => {
-    m.querySelector('#mClose').onclick = closeModal;
-    if (ev.skins) renderEventBundle(m.querySelector('#evBundle'), ev);
-    const dg = m.querySelector('#evDaily'); if (dg) dg.onclick = () => { if (e.day === todayKey()) return; e.day = todayKey(); e.f += ev.daily.pts; giveReward({ gold: ev.daily.gold }); persist(); SND.init(); SND.chest(); toast('A gift from the snow: ' + rewardLine({ gold: ev.daily.gold }) + '.'); renderHub(); openEvent(); };
-    m.querySelectorAll('[data-ev]').forEach(b => b.onclick = () => {
-      const i = +b.dataset.ev, ms = ev.miles[i]; if (e.got.includes(i) || e.f < ms.f) return;
-      e.got.push(i); let msg;
-      if (ms.skin) { const it = giveSkin(ms.skin.slot, ms.skin.skin, ms.skin.name, ms.skin.r); msg = it.name + ' (' + RARITY[it.r].name + ') added to your armory.'; }
-      else if (ms.wings != null) { const it = giveWings(ms.wings); msg = it.name + ' added to your armory.'; }
-      else if (ms.egg != null) { const it = giveEgg(ms.egg); msg = 'An egg hatched: ' + it.name + ' (' + RARITY[it.r].name + ').'; }
-      else { giveReward(ms.give); msg = 'Claimed ' + rewardLine(ms.give) + '.'; }
-      persist(); SND.init(); SND.chest(); toast(msg); renderHub(); openEvent();
-    });
-    renderWingShop(m.querySelector('#evShop'), true);
+/* ---------------- Event hub: key art, live countdown, reward road, summon banner ---------------- */
+let evTab = 'road', evTimerT = 0;
+const SUMMON = { one: 100, ten: 900, hard: 80, soft: 65, legend: 0.012, epicSkin: 0.06, epicGear: 0.12, rareGear: 0.35, ticketEvery: 40 };
+const evArt = ev => `url('${assetUrl('event_' + ev.id)}'), url('${assetUrl(ev.art || ev.icon)}')`;
+const fmtLeft = ms => { const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60, s = Math.floor(ms / 1e3) % 60; return d > 0 ? `${d}d ${h}h ${String(m).padStart(2, '0')}m` : `${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`; };
+const summonState = ev => { SAVE.sum = SAVE.sum || {}; return SAVE.sum[ev.key] = SAVE.sum[ev.key] || { pity: 0, total: 0 }; };
+const ticketsLeft = (ev, e) => Math.max(0, Math.floor(e.f / SUMMON.ticketEvery) - (e.tused || 0));
+function mileIcon(m) { return m.skin ? itemIcon(m.skin.slot, m.skin.r, m.skin.skin) : m.wings != null ? itemIcon('wings', m.wings) : m.egg != null ? itemIcon('familiar', Math.min(3, Math.floor(m.egg / 3))) : m.give.claims ? chestArt(Object.keys(m.give.claims)[0], false) : assetUrl(m.give.gold ? 'cur_gold' : 'cur_sigil'); }
+function mileLabel(m) { return m.skin ? RARITY[m.skin.r].name + ' ' + m.skin.name : m.wings != null ? SLOTS.wings.names[m.wings][0] : m.egg != null ? 'Familiar egg' : rewardLine(m.give); }
+function claimMile(ev, e, i) {
+  const ms = ev.miles[i]; if (e.got.includes(i) || e.f < ms.f) return;
+  e.got.push(i); let msg;
+  if (ms.skin) { const it = giveSkin(ms.skin.slot, ms.skin.skin, ms.skin.name, ms.skin.r); msg = it.name + ' (' + RARITY[it.r].name + ') added to your armory.'; }
+  else if (ms.wings != null) { const it = giveWings(ms.wings); msg = it.name + ' added to your armory.'; }
+  else if (ms.egg != null) { const it = giveEgg(ms.egg); msg = 'An egg hatched: ' + it.name + ' (' + RARITY[it.r].name + ').'; }
+  else { giveReward(ms.give); msg = 'Claimed ' + rewardLine(ms.give) + '.'; }
+  persist(); SND.init(); SND.chest(); toast(msg); renderHub(); openEvent();
+}
+function openEvent(tab) {
+  if (tab) evTab = tab;
+  const ev = activeEvent(), e = eventState(), wk = activeWeekend();
+  if (!ev.skins && evTab === 'summon') evTab = 'road';
+  const snow = ev.id === 'winter', parts = Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 47) % 100}%;animation-delay:${((i * 0.37) % 4).toFixed(2)}s;animation-duration:${(4 + (i % 5)).toFixed(1)}s;--s:${2 + (i % 3)}px"></i>`).join('');
+  openModal(`<div class="evhub" style="--eg:${ev.glow}">
+    <div class="evhero" style="background-image:${evArt(ev)}">
+      <div class="evparts${snow ? ' snow' : ''}">${parts}</div>
+      <div class="evtimer"><span>Ends in</span> <b id="evTimer">${fmtLeft(ev.ends - Date.now())}</b></div>
+      ${wk ? `<div class="evwk">${esc(wk.name)}</div>` : ''}
+      <div class="evtitle"><small>Limited event</small><h2>${esc(ev.name)}</h2><p>${esc(ev.blurb)}</p></div>
+    </div>
+    <div class="evcurbar"><img src="${assetUrl(ev.icon)}" alt=""><b>${fmtNum(e.f)}</b><span>${esc(ev.cur)}</span><button class="evhow" id="evHow" aria-expanded="false">How to earn</button></div>
+    <div class="evhowbox" id="evHowBox" hidden>${[['icon_w_wrath', '+3', 'Horde broken'], ['boss_gaoler', '+2', 'Boss slain'], ['chest_ember_1', '+6', 'Stage clear'], ['dun_gold', '+2', 'Dungeon run'], ['boss_warden', '+4', 'Trial won']].map(([i, v, l]) => `<span><img src="${assetUrl(i)}" alt=""><b>${v}</b>${l}</span>`).join('')}${ev.drop ? `<span><img src="${assetUrl(ev.icon)}" alt=""><b>+${ev.drop.pts}</b>Drops from foes</span>` : ''}<em>Hard mode earns 50% more.</em></div>
+    ${ev.skins ? `<div class="subtabs evtabs"><button data-et="road" aria-selected="${evTab === 'road'}">Rewards</button><button data-et="summon" aria-selected="${evTab === 'summon'}">Summon${ticketsLeft(ev, e) ? ` <i class="tdot">${ticketsLeft(ev, e)}</i>` : ''}</button></div>` : ''}
+    <div id="evBody"></div>
+    <div class="row"><button class="btn ghost" id="mClose">Close</button></div></div>`, m => {
+    m.querySelector('#mClose').onclick = () => { clearInterval(evTimerT); closeModal(); };
+    m.querySelector('#evHow').onclick = () => { const b = m.querySelector('#evHowBox'); b.hidden = !b.hidden; };
+    m.querySelectorAll('[data-et]').forEach(b => b.onclick = () => openEvent(b.dataset.et));
+    clearInterval(evTimerT); evTimerT = setInterval(() => { const t = $('evTimer'); if (!t) { clearInterval(evTimerT); return; } t.textContent = fmtLeft(ev.ends - Date.now()); }, 1000);
+    (evTab === 'summon' ? renderSummon : renderRoad)(m.querySelector('#evBody'), ev, e);
   }, true);
+  $('modalBody').classList.add('evsheet');
+}
+function renderRoad(el, ev, e) {
+  const top = ev.miles.filter(m => m.skin).sort((a, b) => b.skin.r - a.skin.r), first = ev.miles.findIndex((m, i) => !e.got.includes(i));
+  // progress along the road: full segments for passed nodes plus a partial segment to the next node
+  let prog = 0; for (let i = 0; i < ev.miles.length; i++) { const lo = i ? ev.miles[i - 1].f : 0, hi = ev.miles[i].f; if (e.f >= hi) prog = i + 1; else { prog = i + Math.max(0, (e.f - lo) / (hi - lo)); break; } }
+  el.innerHTML = `${top.length ? `<div class="evshow">${top.map(m => `<div class="evprize r${m.skin.r}${m.mythic ? ' myth' : ''}" style="--rc:${RARITY[m.skin.r].color}"><div class="pglow"></div><img src="${mileIcon(m)}" alt=""><b>${esc(mileLabel(m))}</b><span>${m.mythic ? '<i class="mythic">Mythic</i> ' : ''}${m.f} ${esc(ev.cur)}</span></div>`).join('')}</div>` : ''}
+    ${ev.daily ? `<div class="evdaily${e.day === todayKey() ? ' got' : ''}"><img src="${assetUrl('chest_wood_1')}" alt=""><div><b>Daily gift</b><span>${rewardLine({ gold: ev.daily.gold })} + ${ev.daily.pts} ${esc(ev.cur)}</span></div>${e.day === todayKey() ? '<em>Back tomorrow</em>' : '<button class="buy" id="evDaily">Open</button>'}</div>` : ''}
+    <div class="road" id="evRoad" style="--n:${ev.miles.length - 1}"><div class="rline"><i style="width:${(Math.max(0, prog - 1) / (ev.miles.length - 1) * 100).toFixed(1)}%"></i></div>
+      ${ev.miles.map((m, i) => { const got = e.got.includes(i), ready = e.f >= m.f && !got; return `<button class="rnode${got ? ' got' : ready ? ' ready' : ''}${m.mythic ? ' myth' : ''}${m.skin ? ' prize' : ''}" data-ev="${i}" ${ready ? '' : 'tabindex="-1"'}><span class="rpt">${m.f}</span><span class="rcircle"><img src="${mileIcon(m)}" alt="">${got ? '<i class="rcheck">✔</i>' : ''}</span><span class="rlab">${esc(mileLabel(m))}</span>${ready ? '<span class="rclaim">Claim</span>' : ''}</button>`; }).join('')}
+    </div>
+    ${ev.skins ? '<div id="evBundle"></div>' : ''}<div id="evShop"></div>`;
+  el.querySelectorAll('.rnode.ready').forEach(b => b.onclick = () => claimMile(ev, e, +b.dataset.ev));
+  const dg = el.querySelector('#evDaily'); if (dg) dg.onclick = () => { if (e.day === todayKey()) return; e.day = todayKey(); e.f += ev.daily.pts; giveReward({ gold: ev.daily.gold }); persist(); SND.init(); SND.chest(); toast('Daily gift: ' + rewardLine({ gold: ev.daily.gold }) + '.'); renderHub(); openEvent(); };
+  const road = el.querySelector('#evRoad'), node = road.children[1 + Math.max(0, first)]; if (node) setTimeout(() => { road.scrollLeft = Math.max(0, node.offsetLeft - road.clientWidth / 2 + node.offsetWidth / 2); }, 30);
+  if (ev.skins) renderEventBundle(el.querySelector('#evBundle'), ev);
+  renderWingShop(el.querySelector('#evShop'), true);
+}
+/* summon banner: limited cosmetics with published odds and a pity guarantee */
+function summonLegendChance(pity) { return pity + 1 >= SUMMON.hard ? 1 : pity + 1 > SUMMON.soft ? SUMMON.legend + (pity + 1 - SUMMON.soft) * 0.06 : SUMMON.legend; }
+function summonOnce(ev, st) {
+  const sk = ev.skins, featured = [sk.wings && { slot: 'wings', skin: sk.wings[0], name: sk.wings[1] }, sk.fam && { slot: 'familiar', skin: sk.fam[0], name: sk.fam[1] }].filter(Boolean);
+  const has = f => SAVE.items.some(i => i.skin === f.skin && i.slot === f.slot && i.r === 3);
+  st.total++; let r = Math.random();
+  if (r < summonLegendChance(st.pity)) {
+    st.pity = 0; const f = featured.find(x => !has(x));
+    if (f) { const it = giveSkin(f.slot, f.skin, f.name, 3); return { it, tier: 3, label: it.name }; }
+    SAVE.sigils += 300; return { icon: assetUrl('cur_sigil'), tier: 3, label: 'Duplicate legendary: 300 sigils' };
+  }
+  st.pity++; r = Math.random();
+  if (r < SUMMON.epicSkin) { const f = featured[Math.floor(Math.random() * featured.length)]; const it = giveSkin(f.slot, f.skin, f.name, 2); return { it, tier: 2, label: it.name }; }
+  r -= SUMMON.epicSkin;
+  const room = SAVE.items.length < INV_CAP;
+  if (r < SUMMON.epicGear) { if (!room) { SAVE.gold += 600; return { icon: assetUrl('cur_gold'), tier: 2, label: '600 gold (storage full)' }; } const it = genItem(2); SAVE.items.push(it); return { it, tier: 2, label: it.name }; }
+  r -= SUMMON.epicGear;
+  if (r < SUMMON.rareGear) { if (!room) { SAVE.gold += 250; return { icon: assetUrl('cur_gold'), tier: 1, label: '250 gold (storage full)' }; } const it = genItem(1); SAVE.items.push(it); return { it, tier: 1, label: it.name }; }
+  if (Math.random() < 0.6) { SAVE.sigils += 20; return { icon: assetUrl('cur_sigil'), tier: 0, label: '20 sigils' }; }
+  SAVE.gold += 400; return { icon: assetUrl('cur_gold'), tier: 0, label: '400 gold' };
+}
+function renderSummon(el, ev, e) {
+  const st = summonState(ev), tix = ticketsLeft(ev, e), sk = ev.skins, left = SUMMON.hard - st.pity;
+  const feat = [sk.wings && itemIcon('wings', 3, sk.wings[0]), sk.fam && itemIcon('familiar', 3, sk.fam[0])].filter(Boolean);
+  const nextT = SUMMON.ticketEvery - (e.f % SUMMON.ticketEvery);
+  el.innerHTML = `<div class="sumban" style="background-image:${evArt(ev)}"><div class="sumfeat">${feat.map(s => `<img src="${s}" alt="">`).join('')}</div>
+      <div class="sumtx"><small>Limited summon</small><h3>${[sk.wings && sk.wings[1], sk.fam && sk.fam[1]].filter(Boolean).map(esc).join(' & ')}</h3><p>Legendary guaranteed within <b>${left}</b> summon${left === 1 ? '' : 's'}</p></div></div>
+    <div class="pitybar"><i style="width:${(st.pity / SUMMON.hard * 100).toFixed(1)}%"></i><span>Pity ${st.pity} / ${SUMMON.hard}</span></div>
+    <div class="sumbtns">
+      <button class="buy sumbtn" id="sum1"><b>Summon ×1</b><small>${tix ? '1 free ticket' : costHTML({ sigils: SUMMON.one })}</small></button>
+      <button class="buy sumbtn big" id="sum10"><b>Summon ×10</b><small>${costHTML({ sigils: SUMMON.ten })} · save 10%</small></button>
+    </div>
+    <p class="muted" style="text-align:center;font-size:13px;margin:4px 0">Tickets: <b>${tix}</b> · next free ticket in ${nextT} ${esc(ev.cur)}</p>
+    <details class="odds"><summary>Odds</summary><table>
+      <tr><td><b style="color:${RARITY[3].color}">Legendary</b> event cosmetic</td><td>${(SUMMON.legend * 100).toFixed(1)}%</td></tr>
+      <tr><td><b style="color:${RARITY[2].color}">Epic</b> event cosmetic</td><td>${(SUMMON.epicSkin * 100).toFixed(0)}%</td></tr>
+      <tr><td><b style="color:${RARITY[2].color}">Epic</b> gear</td><td>${(SUMMON.epicGear * 100).toFixed(0)}%</td></tr>
+      <tr><td><b style="color:${RARITY[1].color}">Rare</b> gear</td><td>${(SUMMON.rareGear * 100).toFixed(0)}%</td></tr>
+      <tr><td>Sigils or gold</td><td>${((1 - SUMMON.legend - SUMMON.epicSkin - SUMMON.epicGear - SUMMON.rareGear) * 100).toFixed(1)}%</td></tr>
+    </table><p>From summon ${SUMMON.soft + 1}, the legendary chance rises by 6% each summon, and summon ${SUMMON.hard} always gives a legendary. Pity is kept until this event ends. You get each legendary cosmetic once; duplicates become 300 sigils.</p></details>`;
+  const go = (n) => {
+    const useTix = n === 1 && tix > 0, cost = n === 1 ? SUMMON.one : SUMMON.ten;
+    if (!useTix) { if (SAVE.sigils < cost) { toast('You need ' + fmtNum(cost - SAVE.sigils) + ' more sigils.'); return; } SAVE.sigils -= cost; } else e.tused = (e.tused || 0) + 1;
+    const res = []; for (let i = 0; i < n; i++) res.push(summonOnce(ev, st));
+    persist(); renderHub(); SND.init(); SND.chest(); showSummon(res, ev);
+  };
+  el.querySelector('#sum1').onclick = () => go(1); el.querySelector('#sum10').onclick = () => go(10);
+}
+function showSummon(res, ev) {
+  const best = Math.max(...res.map(r => r.tier));
+  openModal(`<div class="sumres${best >= 3 ? ' legend' : ''}" style="--eg:${ev.glow}">${best >= 3 ? '<div class="sumflash"></div>' : ''}
+    <div class="mribbon">${best >= 3 ? 'Legendary!' : 'Summoned'}</div>
+    <div class="multi sumgrid">${res.map((r, k) => { const R = RARITY[r.tier], icon = r.it ? itemIcon(r.it.slot, r.it.r, r.it.skin) : r.icon;
+      return `<div class="mcard r${r.tier}" style="--rc:${R.color};animation-delay:${(k * 0.08).toFixed(2)}s"><img src="${icon}" alt=""><b>${esc(r.label)}</b><span>${R.name}</span></div>`; }).join('')}</div>
+    <div class="row"><button class="btn" id="sumAgain">Back to summon</button></div></div>`, m => { m.querySelector('#sumAgain').onclick = () => openEvent('summon'); }, true);
+  if (best >= 3) SND.bell(98, 0.3);
 }
 
 /* ---------------- Online: realms, cloud save, leaderboards, world boss, guilds ---------------- */
@@ -5071,7 +5258,7 @@ function renderPlay() {
   $('stPrev').disabled = viewStage <= 0; $('stNext').disabled = viewStage >= STAGES.length - 1;
   const hb = $('heroBegin'); hb.disabled = locked; hb.textContent = locked ? 'Locked' : 'Descend';
   $('hardBtn').setAttribute('aria-pressed', !!SAVE.hard); $('hardBtn').hidden = locked;
-  { const ev = activeEvent(), wk = activeWeekend(), dl = Math.max(1, Math.ceil((ev.ends - Date.now()) / 864e5)); $('evLine').innerHTML = `<span style="--eg:${ev.glow}">${esc(ev.name)} \u00b7 ${dl}d left</span>${wk ? `<span class="wk">${esc(wk.name)}</span>` : ''}`; }
+  { const ev = activeEvent(), wk = activeWeekend(), dl = Math.max(1, Math.ceil((ev.ends - Date.now()) / 864e5)); $('evLine').innerHTML = `<button class="evchip${eventClaimable() ? ' hot' : ''}" id="evChip" style="--eg:${ev.glow};background-image:linear-gradient(90deg,rgba(10,8,12,.85),rgba(10,8,12,.35)),${evArt(ev)}"><b>${esc(ev.name)}</b><small>${dl}d left${eventClaimable() ? ' \u00b7 rewards ready' : ''}</small></button>${wk ? `<span class="wk">${esc(wk.name)}</span>` : ''}`; $('evChip').onclick = () => { SND.init(); SND.click && SND.click(); openEvent(); }; }
   $('record').textContent = CLASSES[SAVE.cls].name + ' · Gold ×' + st.gold + ' · Danger ' + '◆'.repeat(viewStage + 1);
   if (!locked && SAVE.stage !== viewStage) { SAVE.stage = viewStage; persist(); }
   renderSide(); renderStageMiles(); heroStart();
