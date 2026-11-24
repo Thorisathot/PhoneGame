@@ -1,7 +1,7 @@
 <title>Ashen Vigil</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Alegreya+Sans:ital,wght@0,500;0,700;0,800;0,900;1,700&display=swap">
 <style>
 /* Layout: full-bleed canvas dungeon; DOM overlays for menus, carved-stone panels centered on the dark. Single dark look by design. */
 :root{
@@ -18,7 +18,7 @@
   --gold:#cfaa62;
   --moss:#5d8a45;
   --display:'Cinzel','Trajan Pro',Georgia,'Times New Roman',serif;
-  --body:'Cormorant Garamond',Garamond,Georgia,'Times New Roman',serif;
+  --body:'Alegreya Sans','Segoe UI',Roboto,sans-serif;
 }
 html,body{height:100%;margin:0;overflow:hidden;background:var(--void);color:var(--bone);font-family:var(--body);font-size:18px;-webkit-user-select:none;user-select:none}
 [hidden]{display:none!important}
@@ -830,6 +830,19 @@ h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance}
 .gsay{display:flex;gap:6px}.gsay .btn{padding:10px 16px}
 .gact{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;background:#2a2048}.gact span{color:#f1e7d3;font-size:14px}.gact .btn{padding:6px 10px;font-size:12px}
 .tosbox{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:8px}.tosbox h3{margin:0;color:#f1e7d3}.tosbox a{color:#ffc04a}
+/* landscape phones: short screens get a compact play screen with the controls on the right */
+@media (orientation:landscape) and (max-height:520px){
+  #tab-play.fight{min-height:0}
+  .fight-top{top:6px;padding-inline:96px}.fight-top h2{font-size:20px}.fight-top p{font-size:11px}
+  .fight-bottom{left:auto;right:96px;width:min(380px,44vw);bottom:8px;gap:6px}
+  .fight .stagewpn{display:none}
+  .fight .miles{padding:2px 8px}.fight .mile img{width:34px}.fight .mile b{font-size:11px}.fight .mile span{font-size:9px}
+  .fight #heroBegin{font-size:17px;padding:11px 34px}
+  .fight .arrow{transform:scale(.75)}
+  .fight .record{font-size:12px}
+  .hardtog{margin-top:0;padding:4px 10px}.hardtog small{display:none}
+  .side{top:6px;gap:4px;padding:6px 4px}.side img{width:34px!important;height:34px!important}
+}
 /* browser */
 body.incombat #game{cursor:none}
 .pkeys{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;font-size:13px;color:#a89ec0}
@@ -1181,7 +1194,7 @@ function resize() {
   cv.style.width = W + 'px'; cv.style.height = H + 'px';
   lightCv.width = Math.ceil(W / 2); lightCv.height = Math.ceil(H / 2);
   const short = Math.min(W, H);
-  ZOOM0 = clamp(short / (short < 600 ? 430 : 640) * zoomPref, 0.6, 1.8); ZOOM = ZOOM0 * ZK;
+  ZOOM0 = clamp(short / (short < 600 ? 370 : 580) * zoomPref, 0.6, 1.9); ZOOM = ZOOM0 * ZK;
   const k = clamp(Math.round(DPR * ZOOM0 * 8) / 8, 0.75, 3);
   if (k !== SPR_K) { SPR_K = k; try { for (const key in SPR) delete SPR[key]; if (floorSt) setFloor(floorSt); } catch (e) {} }
   try { buildVignettes(); } catch (e) {}
@@ -1207,12 +1220,23 @@ const FOE_IMG = { hollow: 'foe_hollow', rat: 'foe_rat', skeleton: 'foe_skeleton'
 // world-unit heights of each sprite
 const SPR_H = { hero: 62, foe_hollow: 50, foe_rat: 30, foe_skeleton: 52, foe_wraith: 56, foe_cultist: 54, foe_dknight: 66, boss_gaoler: 130, boss_mother: 140, boss_warden: 136,
   prop_pillar: 70, prop_brazier: 62, prop_candles: 34, prop_tomb: 60, prop_shrine: 56, chest: 34 };
+const SPR_OUTLINE = n => n.startsWith('hero_') ? 'rgba(255,240,205,0.95)' : n.startsWith('foe_') ? 'rgba(18,6,10,0.92)' : n.startsWith('boss_') ? 'rgba(26,4,8,0.95)' : n.startsWith('item_familiar') ? 'rgba(255,240,205,0.85)' : null;
 function makeSprite(n, worldH) {
   const im = IMG[n]; if (!im) return null;
   const k = SPR_K;
   const h = Math.max(8, Math.round(worldH * k)), w = Math.max(8, Math.round(im.width / im.height * h));
   const c = document.createElement('canvas'); c.width = w; c.height = h;
-  const x = c.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(im, 0, 0, w, h);
+  const x = c.getContext('2d'); x.imageSmoothingQuality = 'high';
+  // bake a crisp outline so characters read against any floor: warm light for heroes, near-black for foes
+  const oc = SPR_OUTLINE(n);
+  if (oc) {
+    const p = Math.max(2, Math.round(k * 1.3)), iw = w - p * 2, ih = h - p * 2;
+    const sil = document.createElement('canvas'); sil.width = w; sil.height = h; const sx = sil.getContext('2d');
+    sx.drawImage(im, p, p, iw, ih); sx.globalCompositeOperation = 'source-in'; sx.fillStyle = oc; sx.fillRect(0, 0, w, h);
+    for (let a = 0; a < 8; a++) x.drawImage(sil, Math.round(Math.cos(a * Math.PI / 4) * p), Math.round(Math.sin(a * Math.PI / 4) * p));
+    try { x.filter = 'saturate(1.12) contrast(1.05)'; } catch (e) {}
+    x.drawImage(im, p, p, iw, ih); try { x.filter = 'none'; } catch (e) {}
+  } else x.drawImage(im, 0, 0, w, h);
   const wc = document.createElement('canvas'); wc.width = w; wc.height = h;
   const wx = wc.getContext('2d'); wx.drawImage(c, 0, 0); wx.globalCompositeOperation = 'source-in'; wx.fillStyle = '#fff4e8'; wx.fillRect(0, 0, w, h);
   const s = { c, white: wc, w: worldH * im.width / im.height, h: worldH, k: h / worldH };
@@ -1323,7 +1347,7 @@ let VIG = null, VIGR = null;
 function buildVignettes() {
   const mk = (rgb, a, r0, r1) => { const w = Math.max(16, Math.ceil(W / 4)), h = Math.max(16, Math.ceil(H / 4)), g = document.createElement('canvas'); g.width = w; g.height = h; const x = g.getContext('2d');
     const gr = x.createRadialGradient(w / 2, h / 2, r0 / 4, w / 2, h / 2, r1 / 4); gr.addColorStop(0, `rgba(${rgb},0)`); gr.addColorStop(1, `rgba(${rgb},${a})`); x.fillStyle = gr; x.fillRect(0, 0, w, h); return g; };
-  VIG = mk('0,0,0', 0.55, Math.min(W, H) * 0.35, Math.hypot(W, H) * 0.6);
+  VIG = mk('0,0,0', 0.42, Math.min(W, H) * 0.42, Math.hypot(W, H) * 0.62);
   VIGR = mk('140,0,0', 1, Math.min(W, H) * 0.3, Math.max(W, H) * 0.7);
 }
 buildVignettes();
@@ -1786,7 +1810,7 @@ function damageEnemy(e, dmg, kx = 0, ky = 0) {
   e.hp -= dmg; e.flash = 0.08; G.dmgDealt += dmg;
   if (G.mode === 'wboss' && e.boss) G.dun.wdmg = (G.dun.wdmg || 0) + dmg;
   if (!e.boss) { const m = 1 / e.mass; e.kbx += kx * m; e.kby += ky * m; }
-  if (G.texts.length < 90) G.texts.push({ x: e.x + rand(-6, 6), y: e.y - e.r - 6, v: Math.round(dmg), t: 0, big: dmg > 60, crit });
+  if (G.texts.length < 90) G.texts.push({ x: e.x + rand(-10, 10), y: e.y - e.r - 6, v: Math.round(dmg), t: 0, big: dmg > 60, crit, vx: rand(-14, 14) });
   if (G.parts.length < 520) for (let i = 0; i < (crit ? 5 : 2); i++) { const a = Math.random() * TAU, sp = rand(60, 180); G.parts.push({ x: e.x, y: e.y - 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, t: 0, life: 0.18, c: crit ? 'rgba(255,190,90,1)' : 'rgba(255,240,210,0.9)', s: 1.3, glow: true }); }
   SND.hit();
   if (e.hp <= 0) killEnemy(e);
@@ -1798,6 +1822,8 @@ function killEnemy(e) {
   const gc = GORE[e.type] || '#5a0c12', n = e.boss ? 46 : 8;
   for (let i = 0; i < n; i++) { const a = Math.random() * TAU, s = rand(40, e.boss ? 280 : 160); G.parts.push({ x: e.x, y: e.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0, life: rand(0.35, 0.8), c: i % 3 === 0 ? '#2a2228' : gc, s: rand(1.8, 4) }); }
   for (let i = 0; i < (e.boss ? 24 : 3); i++) G.parts.push({ x: e.x + rand(-6, 6), y: e.y + rand(-8, 4), vx: rand(-12, 12), vy: rand(-60, -25), t: 0, life: rand(0.5, 1.1), c: 'rgba(255,150,70,0.9)', s: rand(1, 2.2), glow: true });
+  if (G.parts.length < 560) for (let i = 0; i < (e.boss ? 14 : e.elite ? 5 : 1); i++) G.parts.push({ x: e.x + rand(-6, 6), y: e.y - e.r * 0.6, vx: rand(-10, 10), vy: rand(-70, -40), t: 0, life: rand(0.6, 0.9), c: 'rgba(170,220,255,0.9)', s: e.elite || e.boss ? 3.2 : 2.4, glow: true });
+  if (e.elite) G.hitstop = Math.max(G.hitstop || 0, 0.06);
   if (G.parts.length > 720) G.parts.splice(0, G.parts.length - 720);
   G.decals.push({ x: e.x, y: e.y + e.r * 0.5, r: e.r * rand(0.9, 1.5) * (e.boss ? 1.5 : 1), rot: Math.random() * TAU, c: gc, k: Math.floor(Math.random() * 3) });
   if (G.decals.length > 140) G.decals.shift();
@@ -2512,15 +2538,15 @@ function updatePickups(dt) {
   }
   G.shrines = G.shrines.filter(s => s.life > 0 && !(s.used && s.t > 400));
 }
-function floatText(x, y, s, c) { G.texts.push({ x, y, v: s, t: 0, c, label: true }); }
+function floatText(x, y, s, c, huge) { G.texts.push({ x, y, v: s, t: 0, c, label: true, huge }); }
 function gainXp(v) {
   P.xp += v * P.xpMul * (G.mode ? 2.5 : 1);
-  while (P.xp >= P.xpNext) { P.xp -= P.xpNext; P.lv++; G.pendingLevels++; G.flash = 0.6; G.fx.push({ kind: 'lvl', t: 0, dur: 0.9 }); P.xpNext = Math.floor(6 + P.lv * 6 + Math.max(0, P.lv - 18) * 10); }
+  while (P.xp >= P.xpNext) { P.xp -= P.xpNext; P.lv++; G.pendingLevels++; G.flash = 0.6; G.fx.push({ kind: 'lvl', t: 0, dur: 0.9 }); floatText(P.x, P.y - 58, 'LEVEL UP!', '#ffe08a', true); fxSparks(P.x, P.y - 20, 16, 'rgba(255,220,140,1)', 300, 0.6, 2.4, 40); P.xpNext = Math.floor(6 + P.lv * 6 + Math.max(0, P.lv - 18) * 10); }
 }
 function updateFx(dt) {
   if (G.flash > 0) G.flash = Math.max(0, G.flash - dt * 1.5);
   for (const f of G.fx) f.t += dt; G.fx = G.fx.filter(f => f.t < f.dur);
-  for (const t of G.texts) { t.t += dt; t.y -= 32 * dt; } G.texts = G.texts.filter(t => t.t < (t.label ? 1.4 : 0.6));
+  for (const t of G.texts) { t.t += dt; t.y -= (t.label ? 32 : 46 * Math.max(0.2, 1 - t.t * 1.6)) * dt; if (t.vx) t.x += t.vx * dt; } G.texts = G.texts.filter(t => t.t < (t.label ? 1.4 : 0.7));
   for (const p of G.parts) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.92; p.vy *= 0.92; } G.parts = G.parts.filter(p => p.t < p.life);
   if (G.parts.length > 600) G.parts.splice(0, G.parts.length - 600);
 }
@@ -2725,7 +2751,7 @@ function update(dt) {
   if (state === 'dead') { updateFx(dt); return; }
   if (state !== 'play') return;
   // pull the camera back for hordes and bosses; calm weapon effects while a boss is up so its tells read clearly
-  const zt = G.horde ? 0.76 : G.boss ? 0.8 : 1;
+  const zt = G.horde ? 0.86 : G.boss ? 0.88 : 1;
   ZK += (zt - ZK) * Math.min(1, dt * 1.6); ZOOM = ZOOM0 * ZK;
   G.calm += ((G.boss ? 1 : 0) - G.calm) * Math.min(1, dt * 3); FXA = 1 - 0.6 * G.calm;
   dt *= G.slow;
@@ -3136,6 +3162,7 @@ function drawEmissive() {
   for (const g of G.gems) {
     if (g.x < v.x0 || g.x > v.x1 || g.y < v.y0 || g.y > v.y1) continue;
     const gs = GEMS[g.v >= 20 ? 2 : g.v >= 5 ? 1 : 0], y = g.y + Math.sin(t * 4 + g.x * 0.1) * 1.5;
+    if (g.mag && g.sp > 150) { const dx = g.x - P.x, dy = g.y - P.y, d = Math.hypot(dx, dy) || 1; for (let k = 1; k <= 3; k++) { c.globalAlpha = 0.45 / k; const o = k * 5, r = gs.R * (1 - k * 0.18); c.drawImage(gs.c, g.x + dx / d * o - r, y + dy / d * o - r, r * 2, r * 2); } c.globalAlpha = 1; }
     c.drawImage(gs.c, g.x - gs.R, y - gs.R, gs.R * 2, gs.R * 2);
   }
   for (let i = 0; i < EYES.length; i += 5) {
@@ -3277,14 +3304,14 @@ function render() {
   const lc = lctx;
   lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = 'source-over';
   const fk0 = G.flameF ? G.flameF.fuel / 100 : 1;
-  const dark = Math.min(0.93, (artLoaded ? 0.44 : 0.74) + (1 - fk0) * 0.42 + Math.min(0.06, G.t / 600 * 0.06));
+  const dark = Math.min(0.9, (artLoaded ? 0.1 : 0.5) + Math.pow(1 - fk0, 1.6) * 0.45 + Math.min(0.04, G.t / 600 * 0.04));
   lc.fillStyle = `rgba(6,4,9,${dark})`; lc.fillRect(0, 0, lightCv.width, lightCv.height);
   lc.setTransform(0.5 * ZOOM, 0, 0, 0.5 * ZOOM, 0.5 * (W / 2 - camX * ZOOM), 0.5 * (H / 2 - camY * ZOOM));
   lc.globalCompositeOperation = 'destination-out';
   const lights = [];
   const flick = 1 + Math.sin(G.t * 11) * 0.02 + Math.sin(G.t * 7.3) * 0.02;
   const fuelK = G.flameF ? G.flameF.fuel / 100 : 1;
-  lights.push([P.x, P.y, (170 + 230 * fuelK) * flick, 1]);
+  lights.push([P.x, P.y, (280 + 220 * fuelK) * flick, 1]);
   if (G.flameF) lights.push([G.flameF.x, G.flameF.y - 40, 200 + 260 * fuelK, 1]);
   for (const p of pillars) if (p.brazier) lights.push([p.x, p.y - 14, 190 * (1 + Math.sin(G.t * 9 + p.ph) * 0.05), 0.95]);
   for (const p of props) if (p.kind === 'candles') lights.push([p.x, p.y - 6, 120 * (1 + Math.sin(G.t * 10 + p.rot) * 0.06), 0.8]); else if (p.kind === 'rune') lights.push([p.x, p.y, 80, 0.45]);
@@ -3413,13 +3440,14 @@ function render() {
   drawEmissive();
   c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
   for (const t of G.texts) {
-    const life = t.label ? 1.4 : 0.65, a = 1 - t.t / life, pop = 1 + Math.max(0, 0.12 - t.t) * 5;
+    const life = t.label ? 1.4 : 0.7, k = t.t / life, a = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
+    const pop = t.crit ? 1 + Math.max(0, 0.16 - t.t) * 6 : 1 + Math.max(0, 0.1 - t.t) * 4;
     c.globalAlpha = Math.max(0, a) * (t.label ? 1 : 0.35 + 0.65 * FXA);
-    const size = t.label ? 15 : t.crit ? 17 : t.big ? 15 : 12;
-    c.font = `700 ${Math.round(size * pop)}px Cinzel, Georgia, serif`;
-    c.strokeStyle = 'rgba(0,0,0,0.85)'; c.lineWidth = 3;
-    const txt = t.crit ? t.v + '!' : t.v;
-    c.strokeText(txt, t.x, t.y); c.fillStyle = t.label ? t.c : t.crit ? '#ffb347' : t.big ? '#ffd27a' : '#efe6d4'; c.fillText(txt, t.x, t.y);
+    const size = t.label ? (t.huge ? 26 : 17) : t.crit ? 22 : t.big ? 17 : 14;
+    c.font = `${t.label ? 800 : 900} ${Math.round(size * pop)}px 'Alegreya Sans', 'Segoe UI', sans-serif`;
+    c.strokeStyle = t.crit ? 'rgba(80,10,0,0.95)' : 'rgba(10,4,8,0.9)'; c.lineWidth = t.crit ? 5 : 4;
+    const txt = t.crit ? t.v + '!' : t.v, ty = t.y - (t.crit ? Math.sin(Math.min(1, t.t / 0.25) * Math.PI) * 6 : 0);
+    c.strokeText(txt, t.x, ty); c.fillStyle = t.label ? t.c : t.crit ? '#ffcf3a' : t.big ? '#ffe08a' : '#ffffff'; c.fillText(txt, t.x, ty);
   }
   c.globalAlpha = 1;
   drawHUD();
@@ -3549,8 +3577,8 @@ function drawHUD() {
   // timer plate
   const pw = 168; hudPlate(c, W / 2 - pw / 2, 16, pw, 58);
   c.textAlign = 'center'; c.textBaseline = 'top';
-  c.font = '700 26px Cinzel, Georgia, serif'; c.fillStyle = '#f1e7d3'; c.fillText(fmtTime(G.mode ? Math.max(0, G.dun.lim - G.t) : G.t), W / 2, 21);
-  c.font = '600 13px "Cormorant Garamond", Georgia, serif'; c.fillStyle = '#b3a8b8';
+  c.font = "900 30px 'Alegreya Sans', sans-serif"; c.fillStyle = '#fff4dc'; c.fillText(fmtTime(G.mode ? Math.max(0, G.dun.lim - G.t) : G.t), W / 2, 20);
+  c.font = "800 13px 'Alegreya Sans', sans-serif"; c.fillStyle = '#d8cfe8';
   c.fillText(fmtNum(G.kills) + ' slain', W / 2 - 34, 53);
   c.fillStyle = '#e8c779'; c.fillText(fmtNum(G.gold) + ' gold', W / 2 + 38, 53);
   if (G.flameF) { const fk = G.flameF.fuel / 100, mw = 140, mx = W / 2 - mw / 2 + 10, my = 80;
@@ -3560,52 +3588,59 @@ function drawHUD() {
   const nextBell = BOSS_TIMES[G.bossIdx];
   if (G.mode) drawDunHud(c);
   else if (G.horde) {
-    const left = Math.max(0, G.horde.dur - G.horde.t), hw = 200, hx = W / 2 - hw / 2, hy = W < 640 ? 184 : 96;
+    const left = Math.max(0, G.horde.dur - G.horde.t), hw = 200, hx = W / 2 - hw / 2, hy = W < 640 ? 200 : 96;
     c.font = '700 13px Cinzel, Georgia, serif'; c.fillStyle = Math.sin(performance.now() / 160) > 0 ? '#ff6a4a' : '#ffb08a';
     c.fillText('THE HORDE COVETS YOUR LIGHT', W / 2, hy);
     hudBar(c, hx, hy + 18, hw, 6, left / G.horde.dur, 0, '#ff5a3a', '#7a1408');
   } else if (nextBell && !G.boss) { c.font = 'italic 600 14px "Cormorant Garamond", Georgia, serif'; c.fillStyle = nextBell - G.t < 20 ? '#ff7a5a' : '#958a9c'; c.fillText('The bell tolls in ' + fmtTime(nextBell - G.t), W / 2, 98); }
-  // inventory
+  // inventory: rounded tiles with level pips
+  const UF = "'Alegreya Sans', 'Segoe UI', sans-serif";
   c.textAlign = 'left';
-  const ix = 16, iy = W < 640 ? 112 : 22;
-  c.save(); c.translate(ix + 12, iy + 2); c.rotate(Math.PI / 4); c.fillStyle = '#2a1a10'; c.fillRect(-11, -11, 22, 22); c.strokeStyle = '#d9b064'; c.lineWidth = 1.5; c.strokeRect(-11, -11, 22, 22); c.restore();
-  c.font = '700 13px Cinzel, Georgia, serif'; c.fillStyle = '#f1d38e'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(P.lv, ix + 12, iy + 3);
-  let x = ix + 50;
-  const drawSigil = (glyph, color, lv, evo, y, icon) => {
-    c.save(); c.translate(x, y + 12); c.rotate(Math.PI / 4);
-    const g = c.createLinearGradient(-10, -10, 10, 10); g.addColorStop(0, 'rgba(40,32,46,0.95)'); g.addColorStop(1, 'rgba(12,10,16,0.95)');
-    c.fillStyle = g; c.fillRect(-10, -10, 20, 20);
-    c.strokeStyle = evo ? '#ffd27a' : color; c.lineWidth = evo ? 2 : 1.2; c.strokeRect(-10, -10, 20, 20); c.restore();
-    if (icon && IMG[icon]) c.drawImage(IMG[icon], x - 12, y + 0.5, 24, 24 * IMG[icon].height / IMG[icon].width);
-    else { c.font = '900 12px Cinzel, Georgia, serif'; c.fillStyle = color; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(glyph, x, y + 12.5); }
-    if (!evo) for (let i = 0; i < 5; i++) { c.fillStyle = i < lv ? color : 'rgba(255,255,255,0.12)'; c.fillRect(x - 11 + i * 4.6, y + 29, 3.2, 3.2); }
-    else { c.fillStyle = '#ffd27a'; c.fillRect(x - 11, y + 29, 22, 3.2); }
-    x += 32;
+  const phone = W < 640, ts = phone ? 30 : 32, gap = ts + 6, ix = 12, iy = phone ? 108 : 14;
+  const rr = (x0, y0, w0, h0, r0) => { c.beginPath(); c.roundRect(x0, y0, w0, h0, r0); };
+  c.save(); c.translate(ix + 16, iy + 15); c.rotate(Math.PI / 4); c.fillStyle = '#3a1e0c'; c.fillRect(-13, -13, 26, 26); c.strokeStyle = '#ffd27a'; c.lineWidth = 2; c.strokeRect(-13, -13, 26, 26); c.restore();
+  c.font = `900 15px ${UF}`; c.fillStyle = '#ffe9b0'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(P.lv, ix + 16, iy + 16);
+  let x = ix + 42;
+  const tile = (color, lv, evo, y, icon, glyph) => {
+    rr(x, y, ts, ts, 8); c.fillStyle = 'rgba(16,10,26,0.88)'; c.fill();
+    c.lineWidth = evo ? 2.5 : 1.6; c.strokeStyle = evo ? '#ffd27a' : color; c.stroke();
+    if (icon && IMG[icon]) { const im = IMG[icon], s0 = ts - 4, hh = s0 * Math.min(1, im.height / im.width); c.drawImage(im, x + 2, y + (ts - hh) / 2, s0, hh); }
+    else { c.font = `900 13px ${UF}`; c.fillStyle = color; c.textAlign = 'center'; c.fillText(glyph, x + ts / 2, y + ts / 2); }
+    if (!evo) for (let i = 0; i < 5; i++) { c.fillStyle = i < lv ? color : 'rgba(255,255,255,0.16)'; rr(x + 2 + i * ((ts - 4) / 5), y + ts + 2, (ts - 4) / 5 - 1.5, 3.5, 1.5); c.fill(); }
+    else { c.fillStyle = '#ffd27a'; rr(x + 2, y + ts + 2, ts - 4, 3.5, 1.5); c.fill(); }
+    x += gap;
   };
-  const emptySlot = y => { c.save(); c.translate(x, y + 12); c.rotate(Math.PI / 4); c.fillStyle = 'rgba(12,10,16,0.55)'; c.fillRect(-10, -10, 20, 20); c.strokeStyle = 'rgba(217,176,100,0.28)'; c.lineWidth = 1; c.setLineDash([3, 3]); c.strokeRect(-10, -10, 20, 20); c.setLineDash([]); c.restore(); x += 32; };
-  for (const w of P.weapons) drawSigil(WEAPONS[w.id].glyph, WEAPONS[w.id].color, w.lv, w.evo, iy - 10, 'icon_w_' + w.id);
-  for (let i = P.weapons.length; i < MAX_W; i++) emptySlot(iy - 10);
-  x = ix + 50;
-  for (const id in P.passives) drawSigil(PASSIVES[id].glyph, PASSIVES[id].color, P.passives[id], false, iy + 30, 'icon_p_' + id);
-  for (let i = Object.keys(P.passives).length; i < MAX_R; i++) emptySlot(iy + 30);
+  const emptySlot = y => { rr(x, y, ts, ts, 8); c.fillStyle = 'rgba(12,8,20,0.5)'; c.fill(); c.setLineDash([3, 3]); c.strokeStyle = 'rgba(217,176,100,0.32)'; c.lineWidth = 1; c.stroke(); c.setLineDash([]); x += gap; };
+  for (const w of P.weapons) tile(WEAPONS[w.id].color, w.lv, w.evo, iy, 'icon_w_' + w.id, WEAPONS[w.id].glyph);
+  for (let i = P.weapons.length; i < MAX_W; i++) emptySlot(iy);
+  x = ix + 42;
+  for (const id in P.passives) tile(PASSIVES[id].color, P.passives[id], false, iy + ts + 10, 'icon_p_' + id, PASSIVES[id].glyph);
+  for (let i = Object.keys(P.passives).length; i < MAX_R; i++) emptySlot(iy + ts + 10);
   c.textBaseline = 'alphabetic'; c.textAlign = 'left';
-  // health, stamina, flasks
+  // health panel: framed portrait, chunky bars with numbers inside
   if (P.ghost == null || P.ghost < P.hp) P.ghost = P.hp; else P.ghost = Math.max(P.hp, P.ghost - P.maxHp * 0.012);
-  const bw = Math.min(260, W * 0.5), bx = 22, by = H - 66;
-  hudPlate(c, bx - 10, by - 26, bw + 20, 80);
-  c.font = '700 12px Cinzel, Georgia, serif'; c.fillStyle = '#efe4d0'; c.fillText(CLASSES[P.cls].name.toUpperCase(), bx, by - 8);
-  c.textAlign = 'right'; c.fillText(Math.ceil(P.hp) + ' / ' + P.maxHp, bx + bw, by - 8); c.textAlign = 'left';
-  hudBar(c, bx, by, bw, 12, hpk, P.ghost / P.maxHp, '#e0343e', '#7a0c14');
-  const sw = Math.min(bw, bw * 0.72 * (P.maxStam / 100));
-  hudBar(c, bx, by + 17, sw, 6, P.stam / P.maxStam, 0, '#8ac25a', '#355a20');
+  const pr = phone ? 25 : 28, bw = Math.min(phone ? 150 : 240, W * 0.42), px = 14 + pr, py = H - 16 - pr, bx = px + pr + 10, by = py - pr + 6;
+  rr(12, py - pr - 6, pr * 2 + bw + 26, pr * 2 + 12, 18); c.fillStyle = 'rgba(20,12,32,0.86)'; c.fill(); c.strokeStyle = 'rgba(217,176,100,0.55)'; c.lineWidth = 1.5; c.stroke();
+  const him = IMG['hero_' + P.cls];
+  c.save(); c.beginPath(); c.arc(px, py, pr, 0, TAU); c.fillStyle = '#2a1a3a'; c.fill(); c.clip();
+  if (him) { const sw0 = him.width * 0.5; c.drawImage(him, him.width * 0.22, 0, sw0, sw0, px - pr, py - pr, pr * 2, pr * 2); }
+  c.restore();
+  c.beginPath(); c.arc(px, py, pr, 0, TAU); c.lineWidth = 3; c.strokeStyle = hpk < 0.35 ? '#ff5a4a' : '#ffd27a'; c.stroke();
+  const bh = phone ? 15 : 17;
+  hudBar(c, bx, by, bw, bh, hpk, P.ghost / P.maxHp, '#ff4a50', '#8a0c18');
+  c.font = `800 ${phone ? 12 : 13}px ${UF}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.85)';
+  const hpT = Math.ceil(P.hp) + ' / ' + P.maxHp; c.strokeText(hpT, bx + bw / 2, by + bh / 2 + 1); c.fillStyle = '#fff'; c.fillText(hpT, bx + bw / 2, by + bh / 2 + 1);
+  const sw = Math.min(bw, bw * 0.75 * (P.maxStam / 100));
+  hudBar(c, bx, by + bh + 4, sw, 5, P.stam / P.maxStam, 0, '#9ae060', '#3a6a20');
+  c.textAlign = 'left';
   for (let i = 0; i < P.maxFlasks; i++) {
-    const fx = bx + 6 + i * 20, fy = by + 34, full = i < P.flasks;
-    c.fillStyle = full ? '#8a7454' : '#2a2430'; c.fillRect(fx - 2, fy - 5, 4, 5);
-    const g = c.createRadialGradient(fx - 2, fy + 3, 1, fx, fy + 5, 7); g.addColorStop(0, full ? '#ffd08a' : '#2a2430'); g.addColorStop(1, full ? '#c8501c' : '#1a161e');
-    c.fillStyle = g; circle(c, fx, fy + 5, 6.5); c.strokeStyle = OUTLINE; c.lineWidth = 1.5; c.stroke();
+    const fx = bx + 7 + i * 17, fy = by + bh + 19, full = i < P.flasks;
+    c.fillStyle = full ? '#ff9a4a' : 'rgba(255,255,255,0.14)'; circle(c, fx, fy, 6); c.lineWidth = 1.5; c.strokeStyle = full ? '#ffe0b0' : 'rgba(255,255,255,0.2)'; c.stroke();
+    if (full) { c.fillStyle = 'rgba(255,255,255,0.7)'; circle(c, fx - 2, fy - 2, 1.8); }
   }
-  if (!isTouch) { c.fillStyle = '#958a9c'; c.font = 'italic 500 13px "Cormorant Garamond", Georgia, serif'; c.fillText('Q to drink', bx + 8 + P.maxFlasks * 20, by + 43); }
-  if (G.revives > 0) { c.fillStyle = '#f1d38e'; c.font = '700 11px Cinzel, Georgia, serif'; c.textAlign = 'right'; c.fillText('REBIRTH ×' + G.revives, bx + bw, by + 43); c.textAlign = 'left'; }
+  if (!isTouch) { c.fillStyle = '#b8aed0'; c.font = `700 12px ${UF}`; c.fillText('Q', bx + 8 + P.maxFlasks * 17, by + bh + 20); }
+  if (G.revives > 0) { c.fillStyle = '#ffd27a'; c.font = `800 11px ${UF}`; c.textAlign = 'right'; c.fillText('REBIRTH ×' + G.revives, bx + bw, by + bh + 20); c.textAlign = 'left'; }
+  c.textBaseline = 'alphabetic';
   // boss bar
   if (G.boss) {
     const b = G.boss, ww = Math.min(620, W - 40), x0 = (W - ww) / 2, y0 = isTouch ? (W < 640 ? 214 : 124) : H - 48;
