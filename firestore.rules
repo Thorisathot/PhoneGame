@@ -86,6 +86,12 @@ service cloud.firestore {
       }
     }
 
+    // live-event calendar overrides: edit in the Firebase console, players can only read
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     match /reports/{rid} {
       allow create: if signedIn() && request.resource.data.by == request.auth.uid && shortText(request.resource.data.text, 200);
     }

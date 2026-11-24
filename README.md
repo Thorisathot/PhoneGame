@@ -37,7 +37,8 @@ See [STORE.md](STORE.md) for the store listing kit and [APP.md](APP.md) for buil
 
 ## Features
 - Dungeons tab with daily entries: Gilded Vault (gold), Crystal Reliquary (sigils), Ember Hatchery (familiars) and Trial of Bells (boss rush for a gear reliquary). Tiers open by clearing and by player level, and extra entries cost sigils
-- Wings come only from the Feathers of the Fallen event (two-week seasons, feathers from hordes, bosses, clears and trials) or the shop; familiars only from the Ember Hatchery
+- A 12-month live events calendar (see EVENTS.md) with monthly themed events, rotating weekend twists and remote overrides from Firebase
+- Wings come only from events (two-week seasons, feathers from hordes, bosses, clears and trials) or the shop; familiars only from the Ember Hatchery
 - Realms (servers): players join the newest open realm; realms can be closed and merged. Each realm has leaderboards, a weekly world boss the whole realm fights, and guilds with levels, a daily offering and chat (with a word filter, report and block). Cloud saves and transfer codes. Built on Firebase; set `FIREBASE_CONFIG` in `index.html` and publish `firestore.rules`
 - Carry up to 4 armaments and 4 relics per run
 - Hard mode: flasks never refill and rolling has a 2 second cooldown, for +50% gold, sigils and XP

@@ -851,6 +851,11 @@ h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance}
 @keyframes descendPulse{0%,100%{box-shadow:0 5px 0 #9a420c,0 10px 22px -6px rgba(240,120,30,.6),inset 0 2px 0 rgba(255,255,255,.55)}50%{box-shadow:0 5px 0 #9a420c,0 0 34px 4px rgba(255,170,60,.75),inset 0 2px 0 rgba(255,255,255,.55)}}
 @keyframes descendShine{0%,60%{left:-60%}100%{left:130%}}
 @media (prefers-reduced-motion:reduce){.fight #heroBegin,.fight #heroBegin::after{animation:none!important}}
+.evline{margin:6px 0 0;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.evline span{font-family:var(--body);font-weight:800;font-size:12px;letter-spacing:.04em;padding:3px 10px;border-radius:999px;color:#fff;background:rgba(var(--eg,200,170,255),.28);border:1px solid rgba(var(--eg,200,170,255),.7);text-shadow:0 1px 2px #000}
+.evline span.wk{--eg:255,210,90}
+.evweek{padding:8px 12px;border-radius:12px;border:1px solid rgba(255,210,90,.6);background:rgba(255,190,80,.12);font-size:14px;color:#f1e7d3;text-align:center}.evweek b{color:#ffd27a}
+.evcur{width:16px;height:16px;object-fit:contain;vertical-align:-3px}
 /* browser */
 body.incombat #game{cursor:none}
 .pkeys{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;font-size:13px;color:#a89ec0}
@@ -991,7 +996,7 @@ button:focus-visible{outline:3px solid #ffc04a;outline-offset:2px}
     <main class="hub-body">
       <section id="tab-play" class="tab fight">
         <canvas id="heroCv" aria-label="Your origin before the stage boss"></canvas>
-        <div class="fight-top"><h2 id="stageTitle"></h2><p id="stageBest"></p></div>
+        <div class="fight-top"><h2 id="stageTitle"></h2><p id="stageBest"></p><p id="evLine" class="evline"></p></div>
         <div class="side left" id="sideL"></div>
         <div class="side right" id="sideR"></div>
         <div class="fight-bottom">
@@ -1838,8 +1843,9 @@ function newRun(cls) {
   G.decals = []; G.mode = null; G.dun = null; G.crystal = null; G.flash = 0; G.calm = 0; ZK = 1; ZOOM = ZOOM0; FXA = 1; P.swingT = 0; P.ghost = null; P.parry = 0; P.parryCd = 0; G.hitstop = 0; G.flameOut = false;
   G.flameF = { x: 0, y: -110, fuel: 100, t: 0 };
   G.stage = SAVE.stage; G.meta = metaMods(); G.gold = 0; G.sigils = 0; G.revives = G.meta.revive; G.rerolls = G.meta.reroll;
-  G.hard = !!SAVE.hard;
-  G.goldMul = (1 + G.meta.gold) * STAGES[G.stage].gold * (G.hard ? 1.5 : 1) * (1 + 0.01 * (SAVE.guildId ? SAVE.guildLv || 0 : 0));
+  G.hard = !!SAVE.hard; G.mods = eventMods(); const EVA = activeEvent(); G.evDrop = EVA.drop || null; G.evIcon = EVA.icon; G.evCur = EVA.cur;
+  if (G.mods.extraHorde) G.hordes = [150, 300, 470];
+  G.goldMul = (1 + G.meta.gold) * STAGES[G.stage].gold * (G.hard ? 1.5 : 1) * (1 + 0.01 * (SAVE.guildId ? SAVE.guildLv || 0 : 0)) * (G.mods.gold || 1) * (SAVE.guildId ? G.mods.guildGold || 1 : 1);
   P.rollCd = 0;
   const wi = itemById(SAVE.equipped.wings), fi = itemById(SAVE.equipped.familiar);
   G.wingsR = wi ? wi.r : -1; G.famR = fi ? fi.r : -1; G.fam = fi ? { x: 0, y: -30, t: 0, cd: 1 } : null;
@@ -1923,6 +1929,7 @@ function damageEnemy(e, dmg, kx = 0, ky = 0) {
 const GORE = { hollow: '#5a0c12', rat: '#5a0c12', skeleton: '#8a8478', wraith: '#4a6a9a', cultist: '#4e1a5a', knight: '#5a0c12', boss: '#5a0c12' };
 function killEnemy(e) {
   e.dead = true; G.kills++;
+  if (G.evDrop && !e.boss && Math.random() < G.evDrop.chance) G.items.push({ x: e.x, y: e.y, kind: 'evtok', t: 0 });
   if (G.mode) dunOnKill(e);
   const gc = GORE[e.type] || '#5a0c12', n = e.boss ? 46 : 8;
   for (let i = 0; i < n; i++) { const a = Math.random() * TAU, s = rand(40, e.boss ? 280 : 160); G.parts.push({ x: e.x, y: e.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0, life: rand(0.35, 0.8), c: i % 3 === 0 ? '#2a2228' : gc, s: rand(1.8, 4) }); }
@@ -2204,6 +2211,7 @@ function drawFam() {
   if (s) drawSpr(c, s, f.x, f.y + bob, P.fx < 0 ? -1 : 1); else { c.fillStyle = `rgb(${FAM_COL[G.famR]})`; circle(c, f.x, f.y - 10 + bob, 6); }
 }
 function explode(x, y, rad, dmg, evo) {
+  dmg *= G.mods && G.mods.fire || 1;
   G.fx.push({ kind: 'boom', x, y, r: rad, t: 0, dur: 0.38 });
   ring(x, y, rad * 1.35, '255,170,80', 0.42, 5);
   fxSparks(x, y, 9, 'rgba(255,170,70,1)', 260, 0.5, 2.2, 40);
@@ -2240,12 +2248,12 @@ function pickType() {
 }
 function director(dt) {
   const t = G.t * TSCALE;
-  let rate = (1.1 + t / 38) * 1.2; if (G.boss) rate *= 0.45;
+  let rate = (1.1 + t / 38) * 1.2 * (G.mods && G.mods.spawn || 1); if (G.boss) rate *= 0.45;
   const cap = (G.horde ? 440 : 320) + Math.min(120, t / 6);
   G.spawnAcc += rate * dt;
   while (G.spawnAcc >= 1) { G.spawnAcc -= 1; if (G.enemies.length < cap) { const [x, y] = spawnPoint(); spawnEnemy(pickType(), x, y); } }
   if (t >= G.nextElite) {
-    G.nextElite += 60; const [x, y] = spawnPoint();
+    G.nextElite += 60 / (G.mods && G.mods.elite || 1); const [x, y] = spawnPoint();
     spawnEnemy(t < 240 ? 'skeleton' : 'knight', x, y, true);
   }
   if (G.hordes.length && G.t >= G.hordes[0] && !G.boss && !G.horde) { G.hordes.shift(); startHorde(); }
@@ -2272,7 +2280,7 @@ function hordeUpdate(dt) {
   const h = G.horde; h.t += dt; h.next -= dt;
   if (h.next <= 0 && h.t < h.dur - 3) {
     h.next = 0.9;
-    const n = 20 + Math.floor(G.t / 60) * 2, R = Math.hypot(W, H) / 2 / ZOOM + 30, off = Math.random() * TAU;
+    const n = Math.round((20 + Math.floor(G.t / 60) * 2) * (G.mods && G.mods.horde || 1)), R = Math.hypot(W, H) / 2 / ZOOM + 30, off = Math.random() * TAU;
     for (let i = 0; i < n && G.enemies.length < 520; i++) {
       const a = off + i / n * TAU, e = spawnEnemy(pickType(), P.x + Math.cos(a) * R, P.y + Math.sin(a) * R);
       e.hp *= 0.65; e.maxHp = e.hp; e.spd *= 1.18; e.horde = true;
@@ -2398,7 +2406,7 @@ function parryBoss(e, posture, stun) {
 function flameUpdate(dt) {
   const f = G.flameF; if (!f) return;
   f.t += dt;
-  f.fuel = Math.max(0, f.fuel - (0.45 + G.t * TSCALE / 1200 * 0.5) * dt);
+  f.fuel = Math.max(0, f.fuel - (0.45 + G.t * TSCALE / 1200 * 0.5) * dt * (G.mods && G.mods.flame || 1));
   const out = f.fuel <= 0;
   if (out && !G.flameOut) { G.flameOut = true; banner('The flame gutters out', 'The dark emboldens them. Kindle it again.', 2.4); SND.bell(55, 0.3); }
   if (!out && G.flameOut) { G.flameOut = false; banner('The flame burns again', 'The dark recedes.', 1.8); }
@@ -2630,6 +2638,7 @@ function updatePickups(dt) {
     if (d2(it.x, it.y, P.x, P.y) < (P.r + 14) ** 2) {
       it.taken = true;
       if (it.kind === 'heart') kindle(30);
+      else if (it.kind === 'evtok') { const pts = G.evDrop ? G.evDrop.pts : 1; eventState().f += pts; SND.pickup(); floatText(P.x, P.y - 30, '+' + pts + ' ' + (G.evCur || 'tokens'), '#ffe08a'); }
       else if (it.kind === 'flask') { P.flasks = Math.min(P.maxFlasks, P.flasks + 1); SND.drink(); floatText(P.x, P.y - 30, '+1 Flask', '#ef7d32'); }
       else { for (const g of G.gems) g.mag = true; SND.chest(); floatText(P.x, P.y - 30, 'Embers called', '#cfaa62'); }
     }
@@ -2648,7 +2657,7 @@ function updatePickups(dt) {
 }
 function floatText(x, y, s, c, huge) { G.texts.push({ x, y, v: s, t: 0, c, label: true, huge }); }
 function gainXp(v) {
-  P.xp += v * P.xpMul * (G.mode ? 2.5 : 1);
+  P.xp += v * P.xpMul * (G.mode ? 2.5 : 1) * (G.mods && G.mods.xp || 1);
   while (P.xp >= P.xpNext) { P.xp -= P.xpNext; P.lv++; G.pendingLevels++; G.flash = 0.6; G.fx.push({ kind: 'lvl', t: 0, dur: 0.9 }); floatText(P.x, P.y - 58, 'LEVEL UP!', '#ffe08a', true); fxSparks(P.x, P.y - 20, 16, 'rgba(255,220,140,1)', 300, 0.6, 2.4, 40); P.xpNext = Math.floor(6 + P.lv * 6 + Math.max(0, P.lv - 18) * 10); }
 }
 function updateFx(dt) {
@@ -3361,6 +3370,7 @@ function render() {
   for (const it of G.items) {
     const y = it.y + Math.sin(it.t * 4) * 2;
     if (it.kind === 'heart') { const ss = spr('cur_ember', 26); if (ss) drawSpr(c, ss, it.x, y + 8, 1); else { c.fillStyle = '#ff8a3a'; circle(c, it.x, y, 7); } }
+    else if (it.kind === 'evtok') { const ss = G.evIcon && spr(G.evIcon, 24); c.globalCompositeOperation = 'lighter'; glowAt(c, it.x, y, 20, '255,220,140', 0.5); c.globalCompositeOperation = 'source-over'; if (ss) drawSpr(c, ss, it.x, y + 10, 1); else { c.fillStyle = '#ffd27a'; circle(c, it.x, y, 7); } }
     else if (it.kind === 'flask') { c.fillStyle = '#6b5a44'; c.fillRect(it.x - 2, y - 13, 4, 5); c.fillStyle = '#ef7d32'; circle(c, it.x, y - 2, 6.5); c.strokeStyle = OUTLINE; c.lineWidth = 1.5; c.stroke(); }
     else { c.fillStyle = '#3d3445'; circle(c, it.x, y, 8); c.fillStyle = '#d9b064'; circle(c, it.x, y, 4); }
   }
@@ -4114,7 +4124,7 @@ function dunSave() {
 // tiers open one at a time by clearing, and never faster than player level allows
 const dunCap = () => clamp(1 + Math.floor(SAVE.plv / 3), 1, 10);
 const dunMaxTier = d => Math.min(dunCap(), (dunSave().clear[d.id] || 0) + 1);
-const dunLeft = d => d.tries - (dunSave().used[d.id] || 0);
+const dunLeft = d => d.tries + (d.id === 'wboss' ? 0 : evMod('dungeon', 0)) - (dunSave().used[d.id] || 0);
 const thrallGold = t => Math.round(8 * (1 + 0.3 * (t - 1)));
 const crystalSigils = t => 3 + Math.floor(t * 1.2);
 function famOdds(t) { const w = [Math.max(20, 88 - 7 * t), 10 + 3 * t, Math.max(0, (t - 2) * 2.4), t >= 6 ? (t - 5) * 0.6 : 0], s = w.reduce((a, b) => a + b, 0); return w.map(v => v / s); }
@@ -4266,7 +4276,7 @@ function finishDungeon(won) {
     if (won) { const k = trialChest(t); R.claims = { [k]: 1 }; R.gold = 80 * t; cleared = true; title = 'TRIAL WON'; sub = 'Three bells silenced. A reliquary waits in the shop.'; addFeathers(4); }
     else { title = 'THE BELLS TOLL FOR YOU'; sub = 'The trial is not yet won.'; }
   }
-  giveReward(R);
+  giveReward(R); if (G.mode !== 'trial') addFeathers(2);
   if (cleared && G.mode !== 'wboss') ds.clear[d.id] = Math.max(ds.clear[d.id] || 0, t);
   ensureProfile(); SAVE.stats.kills += G.kills; SAVE.stats.time += Math.floor(G.t);
   const xp = Math.floor((25 + 12 * t) * (won ? 1 : 0.5)), lvl = grantPlayerXp(xp); persist();
@@ -4299,12 +4309,56 @@ function drawDunHud(c) {
   else if (G.mode === 'trial') c.fillText('Bell ' + Math.min(3, D.bossN + 1) + ' of 3', W / 2, y);
 }
 
-/* ---------------- Event: Feathers of the Fallen ---------------- */
-const EVENT = { name: 'Feathers of the Fallen', len: 14 * 864e5, epoch: Date.UTC(2026, 0, 5),
+/* ---------------- Live events: a yearly calendar, weekend twists, remote overrides ---------------- */
+// Each event repeats every year on the same dates (local time). Between events, Feathers of the Fallen runs in
+// two-week seasons. Override or extend the calendar without an app update by creating a Firestore document
+// config/events with { events: [...same shape...] }.
+const EVENT_CAL = [
+  { id: 'newyear', name: 'Ashen New Year', start: '01-01', days: 14, glow: '255,190,90', cur: 'Dawn Embers', icon: 'cur_ember', art: 'item_wings_1', blurb: 'The first flame of the year burns brightest. +25% gold in every run.', mods: { gold: 1.25 }, prize: { wings: 1 } },
+  { id: 'hearts', name: 'Crimson Hearts', start: '02-07', days: 14, glow: '255,80,120', cur: 'Crimson Hearts', icon: 'icon_p_vitality', art: 'boss_mother', blurb: 'A blood moon rises. Twice as many elites walk the dark, and they pay well.', mods: { elite: 2, gold: 1.1 }, prize: { egg: 6 } },
+  { id: 'feathers', name: 'Feathers of the Fallen', start: '03-07', days: 14, glow: '200,170,255', cur: 'Feathers', icon: 'item_wings_0', art: 'item_wings_2', blurb: 'Gather feathers from hordes and bosses to earn wings.', mods: {}, prize: { wings: 2 } },
+  { id: 'egghunt', name: 'Egg Hunt of the Deep', start: '04-04', days: 14, glow: '140,230,160', cur: 'Eggs', icon: 'item_familiar_0', art: 'item_familiar_2', blurb: 'Hatchlings hide among the horde. Slay foes to find eggs on the ground.', mods: {}, drop: { chance: 0.006, pts: 2 }, prize: { egg: 8 } },
+  { id: 'champions', name: 'Trial of Champions', start: '05-02', days: 14, glow: '255,215,110', cur: 'Laurels', icon: 'icon_p_strength', art: 'boss_warden', blurb: 'Glory favours the brave: hard mode runs earn double laurels.', mods: { hardEarn: 2 }, prize: { claims: { ember: 1 } } },
+  { id: 'midsummer', name: 'Midsummer Pyre', start: '06-06', days: 14, glow: '255,140,50', cur: 'Cinders', icon: 'icon_w_pyre', art: 'prop_brazier', blurb: 'The vigil flame burns twice as long and fire burns 25% hotter.', mods: { flame: 0.5, fire: 1.25 }, prize: { wings: 1 } },
+  { id: 'rift', name: 'The Abyssal Rift', start: '07-04', days: 14, glow: '180,110,255', cur: 'Void Shards', icon: 'icon_w_rift', art: 'env_crystal', blurb: 'The abyss spills over. Hordes are half again as large, and embers flow 20% faster.', mods: { horde: 1.5, xp: 1.2 }, prize: { egg: 7 } },
+  { id: 'crusade', name: 'Guild Crusade', start: '08-01', days: 14, glow: '120,200,255', cur: 'Banners', icon: 'prop_shrine', art: 'prop_shrine', blurb: 'Stand together: guild members earn 50% more gold and banners.', mods: { guildGold: 1.5 }, prize: { claims: { ember: 1 } } },
+  { id: 'harvest', name: 'Harvest of Souls', start: '09-05', days: 14, glow: '170,220,255', cur: 'Souls', icon: 'cur_sigil', art: 'foe_wraith', blurb: 'Every soul counts. Earn 50% more embers toward levels.', mods: { xp: 1.5 }, prize: { wings: 2 } },
+  { id: 'hallowed', name: 'Hallowed Night', start: '10-17', days: 15, glow: '255,130,40', cur: 'Candy Skulls', icon: 'env_bones', art: 'foe_skeleton', blurb: 'The veil is thin. Every run brings an extra horde, and candy skulls drop from the dead.', mods: { extraHorde: 1, gold: 1.2 }, drop: { chance: 0.004, pts: 1 }, prize: { wings: 2 } },
+  { id: 'emberfest', name: 'Ember Festival', start: '11-21', days: 12, glow: '255,170,70', cur: 'Festival Embers', icon: 'cur_gold', art: 'chest_ember_1', blurb: 'Double gold in every run. Spend it well.', mods: { gold: 2 }, prize: { claims: { ember: 1 } } },
+  { id: 'winter', name: "Winter's Vigil", start: '12-12', days: 21, glow: '190,230,255', cur: 'Snowflames', icon: 'icon_w_ward', art: 'chest_iron_1', blurb: 'A gift waits in the snow every day, and the dark is gentler.', mods: { flame: 0.6 }, daily: { gold: 150, pts: 3 }, prize: { wings: 1 } },
+];
+const FEATHERS = { id: 'feathers', name: 'Feathers of the Fallen', glow: '200,170,255', cur: 'Feathers', icon: 'item_wings_0', art: 'item_wings_2', blurb: 'Gather feathers from hordes and bosses to earn wings.', mods: {}, len: 14 * 864e5, epoch: Date.UTC(2026, 0, 5),
   miles: [{ f: 10, give: { gold: 300 } }, { f: 25, wings: 0 }, { f: 45, give: { sigils: 15 } }, { f: 70, wings: 1 }, { f: 100, give: { claims: { iron: 1 } } }, { f: 140, wings: 2 }, { f: 200, give: { claims: { ember: 1 } } }] };
-function eventState() { const n = Math.floor((Date.now() - EVENT.epoch) / EVENT.len); if (!SAVE.ev || SAVE.ev.n !== n) SAVE.ev = { n, f: 0, got: [] }; return SAVE.ev; }
-function addFeathers(k) { if (k > 0) eventState().f += Math.round(k); }
-const eventClaimable = () => { const e = eventState(); return EVENT.miles.filter((m, i) => e.f >= m.f && !e.got.includes(i)).length; };
+const WEEKENDS = [
+  { id: 'gold', name: 'Double Gold Weekend', blurb: 'All gold found in runs is doubled.', mods: { gold: 2 } },
+  { id: 'frenzy', name: 'Horde Frenzy Weekend', blurb: 'More foes pour in, and they carry 30% more embers.', mods: { spawn: 1.4, xp: 1.3 } },
+  { id: 'blood', name: 'Blood Moon Weekend', blurb: 'Elites come twice as often.', mods: { elite: 2, gold: 1.2 } },
+  { id: 'dungeon', name: 'Dungeon Weekend', blurb: 'One extra free entry to every dungeon each day.', mods: { dungeon: 1 } },
+];
+let EVENT_REMOTE = null;
+function evWindow(ev, now) {
+  // dates repeat every year; return {from, to} in ms for the window that contains or follows now
+  const d = new Date(now), [mo, da] = ev.start.split('-').map(Number);
+  for (const y of [d.getFullYear() - 1, d.getFullYear()]) { const from = new Date(y, mo - 1, da).getTime(), to = from + ev.days * 864e5; if (now >= from && now < to) return { from, to }; }
+  return null;
+}
+function stdMiles(prize) { return [{ f: 10, give: { gold: 300 } }, { f: 25, give: { sigils: 10 } }, { f: 45, give: { claims: { iron: 1 } } }, { f: 70, egg: 3 }, { f: 100, give: { sigils: 25 } }, { f: 140, ...(prize.wings != null ? { wings: prize.wings } : prize.egg != null ? { egg: prize.egg } : { give: prize }) }, { f: 200, give: { claims: { ember: 1 }, sigils: 20 } }]; }
+function activeEvent(now = Date.now()) {
+  for (const ev of (EVENT_REMOTE || EVENT_CAL)) { const w = evWindow(ev, now); if (w) return { ...ev, key: ev.id + '-' + new Date(w.from).getFullYear(), ends: w.to, miles: ev.miles || stdMiles(ev.prize || { claims: { iron: 1 } }) }; }
+  const n = Math.floor((now - FEATHERS.epoch) / FEATHERS.len);
+  return { ...FEATHERS, key: 'feathers-s' + n, ends: FEATHERS.epoch + (n + 1) * FEATHERS.len };
+}
+function activeWeekend(now = Date.now()) {
+  const d = new Date(now), day = d.getDay(); if (day !== 5 && day !== 6 && day !== 0) return null;
+  const fri = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (day === 0 ? 2 : day - 5)), wk = Math.floor(fri.getTime() / (7 * 864e5));
+  return { ...WEEKENDS[wk % WEEKENDS.length], ends: new Date(fri.getFullYear(), fri.getMonth(), fri.getDate() + 3).getTime() };
+}
+function eventMods() { const m = {}; for (const src of [activeEvent().mods || {}, (activeWeekend() || {}).mods || {}]) for (const k in src) { if (k === 'dungeon' || k === 'extraHorde') m[k] = (m[k] || 0) + src[k]; else m[k] = (m[k] || 1) * src[k]; } return m; }
+const evMod = (k, def = 1) => { const v = eventMods()[k]; return v == null ? def : v; };
+function eventState() { const ev = activeEvent(); if (!SAVE.ev || SAVE.ev.key !== ev.key) SAVE.ev = { key: ev.key, f: 0, got: [], day: '' }; return SAVE.ev; }
+function addFeathers(k) { if (!(k > 0)) return; const mul = (G && G.hard ? evMod('hardEarn', 1) : 1) * (SAVE.guildId ? evMod('guildGold', 1) : 1); eventState().f += Math.round(k * mul); }
+const eventClaimable = () => { const e = eventState(), ev = activeEvent(); return ev.miles.filter((m, i) => e.f >= m.f && !e.got.includes(i)).length + (ev.daily && e.day !== todayKey() ? 1 : 0); };
+function giveEgg(tier) { const it = genItem(rollFam(tier), 'familiar'); SAVE.items.push(it); return it; }
 function giveWings(r) { const it = genItem(r, 'wings'); SAVE.items.push(it); return it; }
 function renderWingShop(el, inModal) {
   if (!el) return;
@@ -4321,27 +4375,32 @@ function renderWingShop(el, inModal) {
   });
 }
 function openEvent() {
-  const e = eventState(), ends = EVENT.epoch + (e.n + 1) * EVENT.len - Date.now(), dd = Math.floor(ends / 864e5), hh = Math.floor(ends / 36e5) % 24;
-  const top = EVENT.miles[EVENT.miles.length - 1].f;
-  const rows = EVENT.miles.map((m, i) => {
+  const ev = activeEvent(), e = eventState(), wk = activeWeekend(), left = ev.ends - Date.now(), dd = Math.floor(left / 864e5), hh = Math.floor(left / 36e5) % 24;
+  const top = ev.miles[ev.miles.length - 1].f, cur = esc(ev.cur);
+  const rows = ev.miles.map((m, i) => {
     const got = e.got.includes(i), ready = e.f >= m.f && !got;
-    const icon = m.wings != null ? itemIcon('wings', m.wings) : m.give.claims ? chestArt(Object.keys(m.give.claims)[0], false) : assetUrl(m.give.gold ? 'cur_gold' : 'cur_sigil');
-    const label = m.wings != null ? SLOTS.wings.names[m.wings][0] : rewardLine(m.give);
+    const icon = m.wings != null ? itemIcon('wings', m.wings) : m.egg != null ? itemIcon('familiar', Math.min(3, Math.floor(m.egg / 3))) : m.give.claims ? chestArt(Object.keys(m.give.claims)[0], false) : assetUrl(m.give.gold ? 'cur_gold' : 'cur_sigil');
+    const label = m.wings != null ? SLOTS.wings.names[m.wings][0] : m.egg != null ? 'Familiar egg (tier ' + m.egg + ' odds)' : rewardLine(m.give);
     return `<div class="evrow${got ? ' got' : ready ? ' ready' : ''}"><b class="evf">${m.f}</b><img src="${icon}" alt=""><span>${label}</span>${got ? '<em>Claimed</em>' : ready ? `<button class="buy" data-ev="${i}">Claim</button>` : `<em>${m.f - e.f} to go</em>`}</div>`;
   }).join('');
-  openModal(`<div class="mhero"><div class="cc-rays" style="--cG:255,170,90"></div><img src="${itemIcon('wings', 2)}" alt=""></div>
-    <div class="mribbon">${EVENT.name}</div>
-    <p class="muted" style="text-align:center">Break hordes, fell bosses and win trials to gather feathers. Ends in ${dd}d ${hh}h.</p>
-    <div class="evbar"><i style="width:${Math.min(100, e.f / top * 100)}%"></i><b>${e.f} feathers</b></div>
-    <div class="evlist">${rows}</div>
-    <div class="evtip">Feathers: +3 per horde broken, +2 per boss, +6 for a clear, +4 per Trial of Bells win. Hard mode earns 50% more.</div>
+  const daily = ev.daily ? `<div class="evrow${e.day === todayKey() ? ' got' : ' ready'}"><b class="evf">✶</b><img src="${assetUrl('chest_wood_1')}" alt=""><span>Daily gift: ${rewardLine({ gold: ev.daily.gold })} + ${ev.daily.pts} ${cur}</span>${e.day === todayKey() ? '<em>Come back tomorrow</em>' : '<button class="buy" id="evDaily">Open</button>'}</div>` : '';
+  openModal(`<div class="mhero"><div class="cc-rays" style="--cG:${ev.glow}"></div><img src="${assetUrl(ev.art || ev.icon)}" alt=""></div>
+    <div class="mribbon">${esc(ev.name)}</div>
+    <p class="muted" style="text-align:center">${esc(ev.blurb)} Ends in ${dd}d ${hh}h.</p>
+    ${wk ? `<div class="evweek"><b>${esc(wk.name)}</b> ${esc(wk.blurb)}</div>` : ''}
+    <div class="evbar"><i style="width:${Math.min(100, e.f / top * 100)}%"></i><b><img src="${assetUrl(ev.icon)}" alt="" class="evcur"> ${e.f} ${cur}</b></div>
+    <div class="evlist">${daily}${rows}</div>
+    <div class="evtip">${cur}: +3 per horde broken, +2 per boss, +6 for a clear, +2 per dungeon run, +4 per Trial of Bells win${ev.drop ? ', and they drop from slain foes' : ''}. Hard mode earns 50% more.</div>
     <div id="evShop"></div>
     <div class="row"><button class="btn ghost" id="mClose">Close</button></div>`, m => {
     m.querySelector('#mClose').onclick = closeModal;
+    const dg = m.querySelector('#evDaily'); if (dg) dg.onclick = () => { if (e.day === todayKey()) return; e.day = todayKey(); e.f += ev.daily.pts; giveReward({ gold: ev.daily.gold }); persist(); SND.init(); SND.chest(); toast('A gift from the snow: ' + rewardLine({ gold: ev.daily.gold }) + '.'); renderHub(); openEvent(); };
     m.querySelectorAll('[data-ev]').forEach(b => b.onclick = () => {
-      const i = +b.dataset.ev, ms = EVENT.miles[i]; if (e.got.includes(i) || e.f < ms.f) return;
+      const i = +b.dataset.ev, ms = ev.miles[i]; if (e.got.includes(i) || e.f < ms.f) return;
       e.got.push(i); let msg;
-      if (ms.wings != null) { const it = giveWings(ms.wings); msg = it.name + ' added to your armory.'; } else { giveReward(ms.give); msg = 'Claimed ' + rewardLine(ms.give) + '.'; }
+      if (ms.wings != null) { const it = giveWings(ms.wings); msg = it.name + ' added to your armory.'; }
+      else if (ms.egg != null) { const it = giveEgg(ms.egg); msg = 'An egg hatched: ' + it.name + ' (' + RARITY[it.r].name + ').'; }
+      else { giveReward(ms.give); msg = 'Claimed ' + rewardLine(ms.give) + '.'; }
       persist(); SND.init(); SND.chest(); toast(msg); renderHub(); openEvent();
     });
     renderWingShop(m.querySelector('#evShop'), true);
@@ -4390,6 +4449,7 @@ const Online = {
       await new Promise(ok => { const u = auth.onAuthStateChanged(() => { u(); ok(); }); });
       if (!auth.currentUser) await auth.signInAnonymously();
       this.uid = auth.currentUser.uid;
+      try { const cfg = await this.db.doc('config/events').get(); if (cfg.exists && Array.isArray(cfg.data().events) && cfg.data().events.length) EVENT_REMOTE = cfg.data().events; } catch (e) {}
       await this.joinRealm(); await this.loadGuild(); await this.pushSave(true); await this.pushScore();
       this.state = 'ready';
     } catch (e) { console.warn('Online init failed', e); this.state = 'error'; this.err = String(e && e.message || e); }
@@ -4979,6 +5039,7 @@ function renderPlay() {
   $('stPrev').disabled = viewStage <= 0; $('stNext').disabled = viewStage >= STAGES.length - 1;
   const hb = $('heroBegin'); hb.disabled = locked; hb.textContent = locked ? 'Locked' : 'Descend';
   $('hardBtn').setAttribute('aria-pressed', !!SAVE.hard); $('hardBtn').hidden = locked;
+  { const ev = activeEvent(), wk = activeWeekend(), dl = Math.max(1, Math.ceil((ev.ends - Date.now()) / 864e5)); $('evLine').innerHTML = `<span style="--eg:${ev.glow}">${esc(ev.name)} \u00b7 ${dl}d left</span>${wk ? `<span class="wk">${esc(wk.name)}</span>` : ''}`; }
   $('record').textContent = CLASSES[SAVE.cls].name + ' · Gold ×' + st.gold + ' · Danger ' + '◆'.repeat(viewStage + 1);
   if (!locked && SAVE.stage !== viewStage) { SAVE.stage = viewStage; persist(); }
   renderSide(); renderStageMiles(); heroStart();
