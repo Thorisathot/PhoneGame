@@ -4186,7 +4186,14 @@ function openEvent() {
 
 /* ---------------- Online: realms, cloud save, leaderboards, world boss, guilds ---------------- */
 // Paste the web app config from Firebase console > Project settings > Your apps. These values are public.
-const FIREBASE_CONFIG = null;
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyCLAB_slMGmkbh-fFAeV2Z84XJHy2F62zs',
+  authDomain: 'ashen-vigil-f6245.firebaseapp.com',
+  projectId: 'ashen-vigil-f6245',
+  storageBucket: 'ashen-vigil-f6245.firebasestorage.app',
+  messagingSenderId: '574500808778',
+  appId: '1:574500808778:web:688ad1cbf7241f8c435eb3',
+};
 const REALM_CAP = 3000, REALM_DAYS = 21, GUILD_MAX = 30, GUILD_COST = { gold: 1000 }, OFFER_GOLD = 200, WB_TRIES = 2;
 const REALM_NAMES = ['Ashfall', 'Emberwatch', 'Gravewind', 'Duskhold', 'Cinderreach', 'Bellmourne', 'Hollowmere', 'Pyrewood', 'Blackvigil', 'Sorrowgate', 'Thornkeep', 'Wraithmoor'];
 const realmName = n => REALM_NAMES[(n - 1) % REALM_NAMES.length] + (n > REALM_NAMES.length ? ' ' + ROMAN[Math.floor((n - 1) / REALM_NAMES.length)] || '' : '');
