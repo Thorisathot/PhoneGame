@@ -829,6 +829,7 @@ h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance}
 .gmsg{font-size:14px;color:#e8e0f4;line-height:1.3;cursor:pointer}.gmsg b{color:#ffc04a;margin-right:4px}.gmsg.me b{color:#9fd6ff}
 .gsay{display:flex;gap:6px}.gsay .btn{padding:10px 16px}
 .gact{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;background:#2a2048}.gact span{color:#f1e7d3;font-size:14px}.gact .btn{padding:6px 10px;font-size:12px}
+.tosbox{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:8px}.tosbox h3{margin:0;color:#f1e7d3}.tosbox a{color:#ffc04a}
 /* browser */
 body.incombat #game{cursor:none}
 .pkeys{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;font-size:13px;color:#a89ec0}
@@ -1637,7 +1638,7 @@ function grantPlayerXp(x) {
    In the browser these report unavailable and the UI hides them. In the Capacitor
    app they talk to RevenueCat (@revenuecat/purchases-capacitor) and AdMob
    (@capacitor-community/admob). Fill in the keys below before shipping. */
-const PRIVACY_URL = 'https://thorisathot.github.io/PhoneGame/privacy.html';
+const PRIVACY_URL = 'https://thorisathot.github.io/PhoneGame/privacy.html', TERMS_URL = 'https://thorisathot.github.io/PhoneGame/terms.html';
 const STORE_KEYS = { revenuecatAndroid: 'REVENUECAT_ANDROID_KEY', revenuecatIos: 'REVENUECAT_IOS_KEY', admobRewardedAndroid: 'ca-app-pub-3940256099942544/5224354917', admobRewardedIos: 'ca-app-pub-3940256099942544/1712485313' };
 const Platform = {
   plugins: {}, prices: {}, ready: false,
@@ -4415,6 +4416,13 @@ async function realmBoss(el) {
   const go = el.querySelector('#wbGo'); if (go) go.onclick = () => { if (SAVE.wbDay !== todayKey()) { SAVE.wbDay = todayKey(); SAVE.wbUsed = 0; } SAVE.wbUsed++; persist(); Online.stopChat(); startDungeon('wboss', dunCap()); };
 }
 async function realmGuild(el) {
+  if (!SAVE.tosOk) {
+    el.innerHTML = `<div class="tosbox"><h3>Before you join a guild</h3><p class="muted">Guilds include chat with other players. Please read and accept the community rules in our terms of service: be respectful, no harassment, hate, sexual content, personal information, spam or cheating. You can report and block players, and we remove content and accounts that break the rules.</p>
+      <p><a href="${TERMS_URL}" target="_blank" rel="noopener">Read the terms of service</a> \u00b7 <a href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy policy</a></p>
+      <button class="btn" id="tosYes">I accept the terms</button></div>`;
+    el.querySelector('#tosYes').onclick = () => { SAVE.tosOk = Date.now(); persist(); openRealm('guild'); };
+    return;
+  }
   await Online.loadGuild();
   const g = Online.guild;
   if (!g) {
@@ -4945,7 +4953,7 @@ function openSettings(confirmErase) {
     <div class="seg two" role="group" aria-label="Sound"><button data-s="on" aria-pressed="${!SND.muted}">On</button><button data-s="off" aria-pressed="${SND.muted}">Off</button></div>
     <div class="eyebrow">Controls</div><p class="muted" style="margin:0;font-size:15px">Move with WASD, the arrow keys or by dragging. Roll with Space, Shift or a right-click. Parry with F, J or a left-click. Drink a flask with Q or E. Pause with Esc, toggle sound with M. Controllers work too: left stick moves, A rolls, B parries, Y drinks, Start pauses.</p>
     ${!Platform.native ? `<div class="eyebrow">This browser</div><div class="row setrow">${canFullscreen() ? '<button class="btn ghost" id="mFull">Fullscreen</button>' : ''}${installPrompt ? '<button class="btn ghost" id="mInstall">Install as app</button>' : ''}<button class="btn ghost" id="mExport">Back up save</button><button class="btn ghost" id="mImport">Restore save</button></div><p class="muted" style="margin:0;font-size:13px">Progress is stored in this browser. Back it up before clearing site data or switching devices.</p>` : ''}
-    <div class="eyebrow">Privacy</div><div class="row setrow"><a class="btn ghost" href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy policy</a>${Platform.privacyOpt ? '<button class="btn ghost" id="mAdPriv">Ad privacy choices</button>' : ''}</div>
+    <div class="eyebrow">Privacy</div><div class="row setrow"><a class="btn ghost" href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy policy</a><a class="btn ghost" href="${TERMS_URL}" target="_blank" rel="noopener">Terms of service</a>${Platform.privacyOpt ? '<button class="btn ghost" id="mAdPriv">Ad privacy choices</button>' : ''}</div>
     ${confirmErase ? `<p class="muted">This erases all gold, sigils, gear, upgrades and unlocks on this device. It cannot be undone.</p>
       <div class="row"><button class="btn ghost danger" id="mErase2">Erase everything</button><button class="btn ghost" id="mKeep">Keep my progress</button></div>`
       : `<div class="row"><button class="btn" id="mClose" style="padding:12px 24px;font-size:14px">Done</button><button class="btn ghost danger" id="mErase">Erase progress</button></div>`}`, m => {
