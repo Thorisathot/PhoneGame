@@ -1203,6 +1203,7 @@ window.addEventListener('resize', resize); resize();
 
 /* ---------------- Painted art: loading and sprite caches ---------------- */
 const IMG = {}, SPR = {};
+const STAGE_ENV_LIST = { undercroft: ['env_cage', 'env_wall', 'env_rack'], catacombs: ['env_bones', 'env_coffin', 'env_puddle'], cathedral: ['env_statue', 'env_pew', 'env_glass'], abyss: ['env_crystal', 'env_spire', 'env_crack'] };
 const IMG_NAMES = [
   ...['knight', 'sorcerer', 'pyromancer', 'wanderer', 'cleric'].map(k => 'hero_' + k),
   ...['hollow', 'rat', 'skeleton', 'wraith', 'cultist', 'dknight'].map(k => 'foe_' + k),
@@ -1213,6 +1214,7 @@ const IMG_NAMES = [
   ...['wood', 'iron', 'ember'].flatMap(k => [`chest_${k}_0`, `chest_${k}_1`]),
   'cur_gold', 'cur_sigil', 'cur_ember', 'prop_urn',
   ...['pillar', 'brazier', 'candles', 'tomb', 'shrine'].map(k => 'prop_' + k),
+  ...Object.values(STAGE_ENV_LIST).flat(),
   ...['undercroft', 'catacombs', 'cathedral', 'abyss'].flatMap(k => ['floor_' + k, 'stage_' + k]),
 ];
 const assetUrl = n => 'assets/' + n + '.webp';
@@ -1404,10 +1406,16 @@ function setFloor(st) {
 /* ---------------- World features ---------------- */
 const CHUNK = 480;
 const chunkCache = new Map();
+// per-stage scenery: tall pieces are depth-sorted and solid, flat pieces lie on the floor
+const STAGE_ENV = { undercroft: ['env_cage', 'env_wall', 'env_rack'], catacombs: ['env_bones', 'env_coffin', 'env_puddle'], cathedral: ['env_statue', 'env_pew', 'env_glass'], abyss: ['env_crystal', 'env_spire', 'env_crack'] };
+const ENV_FLAT = new Set(['env_puddle', 'env_glass', 'env_crack']);
+const ENV_H = { env_cage: 88, env_wall: 70, env_rack: 66, env_bones: 46, env_coffin: 58, env_puddle: 96, env_statue: 104, env_pew: 54, env_glass: 76, env_crystal: 86, env_spire: 112, env_crack: 100 };
+const ENV_R = { env_cage: 30, env_wall: 30, env_rack: 22, env_bones: 0, env_coffin: 24, env_statue: 22, env_pew: 0, env_crystal: 24, env_spire: 18 };
+const ENV_GLOW = { env_puddle: '80,220,200', env_statue: '255,140,60', env_pew: '255,150,60', env_crystal: '190,120,255', env_spire: '170,100,255', env_crack: '190,110,255', env_coffin: '80,220,180' };
 function chunkAt(cx, cy) {
-  const key = cx + ',' + cy; let c = chunkCache.get(key);
+  const sg = G ? G.stage : 0, key = cx + ',' + cy + ',' + sg; let c = chunkCache.get(key);
   if (c) return c;
-  c = { pillar: null, decals: [] };
+  c = { pillar: null, decals: [], env: [] };
   if (!(Math.abs(cx) <= 0 && Math.abs(cy) <= 0)) {
     if (hash(cx, cy, 1) < 0.5) {
       const r = 20 + hash(cx, cy, 2) * 12;
@@ -1428,14 +1436,25 @@ function chunkAt(cx, cy) {
     if (kind === 'candles') { p.c = []; const n = 3 + Math.floor(hash(cx, i, 35) * 3); for (let k = 0; k < n; k++) p.c.push([(hash(k, cx, 36) - 0.5) * 18, (hash(k, cy, 37) - 0.5) * 7, 5 + hash(k, i, 38) * 9]); }
     c.props.push(p);
   }
+  const kinds = STAGE_ENV[STAGES[sg].id];
+  if (kinds && !(cx === 0 && cy === 0)) for (let i = 0; i < 3; i++) {
+    const h = hash(cx * 11 + i, cy * 13 - i, 41); if (h > 0.5) continue;
+    const x = cx * CHUNK + 50 + hash(cx, cy + i, 42) * (CHUNK - 100), y = cy * CHUNK + 50 + hash(cx + i, cy, 43) * (CHUNK - 100);
+    if (c.pillar && Math.hypot(x - c.pillar.x, y - c.pillar.y) < 110) continue;
+    if (c.env.some(e => Math.hypot(x - e.x, y - e.y) < 120)) continue;
+    const kind = kinds[Math.floor(hash(cx * 3 + i, cy, 44) * kinds.length) % kinds.length];
+    c.env.push({ x, y, kind, flip: hash(cx, cy * 5 + i, 45) < 0.5 ? -1 : 1, s: 0.85 + hash(cx + i * 7, cy, 46) * 0.35, flat: ENV_FLAT.has(kind), r: (ENV_R[kind] || 0) });
+  }
   if (chunkCache.size > 4000) chunkCache.clear();
   chunkCache.set(key, c); return c;
 }
 function collidePillar(o) {
   const c = chunkAt(Math.floor(o.x / CHUNK), Math.floor(o.y / CHUNK));
-  const p = c.pillar; if (!p) return;
-  const dx = o.x - p.x, dy = o.y - p.y, rr = p.r + o.r, dd = dx * dx + dy * dy;
-  if (dd < rr * rr) { const d = Math.sqrt(dd) || 1; o.x = p.x + dx / d * rr; o.y = p.y + dy / d * rr; }
+  const p = c.pillar;
+  if (p) { const dx = o.x - p.x, dy = o.y - p.y, rr = p.r + o.r, dd = dx * dx + dy * dy;
+    if (dd < rr * rr) { const d = Math.sqrt(dd) || 1; o.x = p.x + dx / d * rr; o.y = p.y + dy / d * rr; } }
+  for (const e of c.env) { if (!e.r) continue; const ey = e.y - 6, dx = o.x - e.x, dy = o.y - ey, rr = e.r * e.s + o.r, dd = dx * dx + dy * dy;
+    if (dd < rr * rr) { const d = Math.sqrt(dd) || 1; o.x = e.x + dx / d * rr; o.y = ey + dy / d * rr; } }
 }
 
 /* ---------------- Definitions ---------------- */
@@ -1810,7 +1829,7 @@ function damageEnemy(e, dmg, kx = 0, ky = 0) {
   e.hp -= dmg; e.flash = 0.08; G.dmgDealt += dmg;
   if (G.mode === 'wboss' && e.boss) G.dun.wdmg = (G.dun.wdmg || 0) + dmg;
   if (!e.boss) { const m = 1 / e.mass; e.kbx += kx * m; e.kby += ky * m; }
-  if (G.texts.length < 90) G.texts.push({ x: e.x + rand(-10, 10), y: e.y - e.r - 6, v: Math.round(dmg), t: 0, big: dmg > 60, crit, vx: rand(-14, 14) });
+  if (G.texts.length < (crit || dmg > 60 ? 50 : 14)) G.texts.push({ x: e.x + rand(-10, 10), y: e.y - e.r - 6, v: Math.round(dmg), t: 0, big: dmg > 60, crit, vx: rand(-14, 14) });
   if (G.parts.length < 520) for (let i = 0; i < (crit ? 5 : 2); i++) { const a = Math.random() * TAU, sp = rand(60, 180); G.parts.push({ x: e.x, y: e.y - 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, t: 0, life: 0.18, c: crit ? 'rgba(255,190,90,1)' : 'rgba(255,240,210,0.9)', s: 1.3, glow: true }); }
   SND.hit();
   if (e.hp <= 0) killEnemy(e);
@@ -3000,6 +3019,15 @@ function drawPropGlow(p) {
     for (let i = 0; i < 8; i++) { const a1 = p.rot - t * 0.3 + i / 8 * TAU; c.fillStyle = `rgba(${gc},${a + 0.2})`; c.fillRect(p.x + Math.cos(a1) * 24.5 - 1, p.y + Math.sin(a1) * 24.5 - 1, 2, 2); }
   }
 }
+function drawEnvFlat(e) {
+  const s = spr(e.kind, Math.round(ENV_H[e.kind])); if (!s) return;
+  const w = s.w * e.s, h = s.h * e.s; ctx.drawImage(s.c, e.x - w / 2, e.y - h / 2, w, h);
+}
+function drawEnvTall(e) {
+  const s = spr(e.kind, Math.round(ENV_H[e.kind])); if (!s) return;
+  shadowAt(ctx, e.x, e.y - 2, s.w * e.s * 0.42, s.w * e.s * 0.14, 0.42);
+  blit(ctx, s, e.x, e.y + 6, e.flip, 0, e.s, e.s, 0);
+}
 function drawPillar(p) {
   const c = ctx, r = p.r;
   const ps = spr(p.brazier ? 'prop_brazier' : 'prop_pillar', p.brazier ? SPR_H.prop_brazier : Math.round(r * 2.8));
@@ -3185,7 +3213,9 @@ function render() {
   c.fillStyle = floorPattern; c.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
   const cx0 = Math.floor(v.x0 / CHUNK), cx1 = Math.floor(v.x1 / CHUNK), cy0 = Math.floor(v.y0 / CHUNK), cy1 = Math.floor(v.y1 / CHUNK);
   const pillars = [], props = [];
-  for (let x = cx0; x <= cx1; x++) for (let y = cy0; y <= cy1; y++) { const ch = chunkAt(x, y); for (const d of ch.decals) drawDecal(d); if (ch.pillar) pillars.push(ch.pillar); for (const p of ch.props) props.push(p); }
+  const envs = [];
+  for (let x = cx0; x <= cx1; x++) for (let y = cy0; y <= cy1; y++) { const ch = chunkAt(x, y); for (const d of ch.decals) drawDecal(d); if (ch.pillar) pillars.push(ch.pillar); for (const p of ch.props) props.push(p); for (const e of ch.env) envs.push(e); }
+  for (const e of envs) if (e.flat) drawEnvFlat(e);
   for (const p of props) drawProp(p);
   if (G.flameF) drawVigil();
   c.globalAlpha = 0.5; for (const d of G.decals) if (d.x > v.x0 && d.x < v.x1 && d.y > v.y0 && d.y < v.y1) drawGore(d); c.globalAlpha = 1;
@@ -3245,13 +3275,14 @@ function render() {
   const ents = [];
   for (const e of G.enemies) if (e.x > v.x0 && e.x < v.x1 && e.y > v.y0 && e.y < v.y1 + 40) ents.push(e);
   for (const p of pillars) ents.push({ pillar: p, y: p.y });
+  for (const e of envs) if (!e.flat) ents.push({ envp: e, y: e.y });
   ents.push({ player: true, y: P.y });
   if (G.fam) ents.push({ famEnt: true, y: G.fam.y + 40 });
   ents.sort((a, b) => a.y - b.y);
   EYES.length = 0;
   for (const p of G.parts) if (p.ghost) { c.globalAlpha = 0.35 * (1 - p.t / p.life); c.fillStyle = (LOOKS[P.cls] || LOOKS.knight).cloak; ellipse(c, p.x, p.y - 2, 8, 11); }
   c.globalAlpha = 1;
-  for (const e of ents) { if (e.pillar) drawPillar(e.pillar); else if (e.player) drawPlayer(); else if (e.famEnt) drawFam(); else drawEnemy(e); }
+  for (const e of ents) { if (e.pillar) drawPillar(e.pillar); else if (e.envp) drawEnvTall(e.envp); else if (e.player) drawPlayer(); else if (e.famEnt) drawFam(); else drawEnemy(e); }
   for (const e of ents) if (e.stun > 0 || e.broken > 0) { const hy = e.y - (e.boss ? 150 : 52); for (let i = 0; i < 3; i++) { const a = G.t * 5 + i * TAU / 3, sx = e.x + Math.cos(a) * (e.boss ? 26 : 12), sy = hy + Math.sin(a) * 4; c.fillStyle = '#ffe08a'; c.save(); c.translate(sx, sy); c.rotate(Math.PI / 4); c.fillRect(-3, -3, 6, 6); c.restore(); } }
   if (G.boss && G.boss.phase === 'swipeTele') {
     const b = G.boss, R = b.r + 95, k = 1 - Math.max(0, b.ct) / 0.7, gold = b.ct < 0.32;
@@ -3317,6 +3348,7 @@ function render() {
   for (const p of props) if (p.kind === 'candles') lights.push([p.x, p.y - 6, 120 * (1 + Math.sin(G.t * 10 + p.rot) * 0.06), 0.8]); else if (p.kind === 'rune') lights.push([p.x, p.y, 80, 0.45]);
   for (const s of G.shrines) if (!s.used || s.t < 500) lights.push([s.x, s.y - 14, s.used ? 120 : 220, 0.95]);
   for (const ch of G.chests) lights.push([ch.x, ch.y, 110, 0.85]);
+  for (const e of envs) if (ENV_GLOW[e.kind]) lights.push([e.x, e.y - (e.flat ? 0 : 30), 110 * e.s, 0.55]);
   if (G.crystal) lights.push([G.crystal.x, G.crystal.y - 30, 280, 1]);
   let nl = 0;
   for (const p of G.proj) { if (nl >= 18) break; if (p.kind === 'fire' || p.kind === 'lance' || p.kind === 'scythe') { nl++; lights.push([p.x, p.y, 100, 0.75]); } else if (p.kind === 'meteor' && p.t > 0) { nl++; lights.push([p.x, p.y, 70 + 160 * p.t / p.dur, 0.85]); } else if (p.kind === 'rift') { nl++; lights.push([p.x, p.y, p.r * 1.6, 0.55]); } else if (p.kind === 'toll' && p.t >= 0) { nl++; lights.push([p.x, p.y, p.r * 1.2 + 40, 0.6 * (1 - p.t / p.dur)]); } }
@@ -3592,7 +3624,7 @@ function drawHUD() {
     c.font = '700 13px Cinzel, Georgia, serif'; c.fillStyle = Math.sin(performance.now() / 160) > 0 ? '#ff6a4a' : '#ffb08a';
     c.fillText('THE HORDE COVETS YOUR LIGHT', W / 2, hy);
     hudBar(c, hx, hy + 18, hw, 6, left / G.horde.dur, 0, '#ff5a3a', '#7a1408');
-  } else if (nextBell && !G.boss) { c.font = 'italic 600 14px "Cormorant Garamond", Georgia, serif'; c.fillStyle = nextBell - G.t < 20 ? '#ff7a5a' : '#958a9c'; c.fillText('The bell tolls in ' + fmtTime(nextBell - G.t), W / 2, 98); }
+  } else if (nextBell && !G.boss) { c.font = "italic 700 14px 'Alegreya Sans', sans-serif"; c.fillStyle = nextBell - G.t < 20 ? '#ff7a5a' : '#958a9c'; c.fillText('The bell tolls in ' + fmtTime(nextBell - G.t), W / 2, 98); }
   // inventory: rounded tiles with level pips
   const UF = "'Alegreya Sans', 'Segoe UI', sans-serif";
   c.textAlign = 'left';
