@@ -20,7 +20,8 @@ service cloud.firestore {
 
       match /scores/{uid} {
         allow read: if signedIn();
-        allow write: if isMe(uid)
+        allow delete: if isMe(uid);
+        allow create, update: if isMe(uid)
           && request.resource.data.keys().hasOnly(['name', 'ava', 'plv', 'kills', 'guild', 'at', 's0', 's1', 's2', 's3', 'h0', 'h1', 'h2', 'h3'])
           && shortText(request.resource.data.name, 16) && shortText(request.resource.data.guild, 4) && shortText(request.resource.data.ava, 16)
           && num(request.resource.data.plv, 1, 500) && num(request.resource.data.kills, 0, 100000000)
@@ -36,6 +37,7 @@ service cloud.firestore {
         allow update: if signedIn() && changedOnly(['dmg']) && request.resource.data.dmg > resource.data.dmg && request.resource.data.dmg - resource.data.dmg <= 3000000;
         match /hits/{uid} {
           allow read: if signedIn();
+          allow delete: if isMe(uid);
           allow create: if isMe(uid) && request.resource.data.keys().hasOnly(['name', 'dmg', 'at']) && shortText(request.resource.data.name, 16) && num(request.resource.data.dmg, 0, 3000000);
           allow update: if isMe(uid) && request.resource.data.keys().hasOnly(['name', 'dmg', 'at']) && shortText(request.resource.data.name, 16)
             && request.resource.data.dmg >= resource.data.dmg && request.resource.data.dmg - resource.data.dmg <= 3000000;
@@ -45,12 +47,13 @@ service cloud.firestore {
 
     match /players/{uid} {
       allow read: if signedIn();
-      allow write: if isMe(uid) && request.resource.data.keys().hasOnly(['realm', 'name', 'plv', 'guild', 'created']);
+      allow delete: if isMe(uid);
+      allow create, update: if isMe(uid) && request.resource.data.keys().hasOnly(['realm', 'name', 'plv', 'guild', 'created']);
     }
 
     match /saves/{uid} {
-      allow read: if isMe(uid);
-      allow write: if isMe(uid) && request.resource.data.keys().hasOnly(['data', 'ts', 'plv', 'at']) && shortText(request.resource.data.data, 900000);
+      allow read, delete: if isMe(uid);
+      allow create, update: if isMe(uid) && request.resource.data.keys().hasOnly(['data', 'ts', 'plv', 'at']) && shortText(request.resource.data.data, 900000);
     }
 
     match /guilds/{gid} {

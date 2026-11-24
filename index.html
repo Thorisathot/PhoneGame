@@ -4357,6 +4357,16 @@ const Online = {
   listenChat(cb) { this.stopChat(); this.unsub = this.db.collection('guilds/' + this.guild.id + '/chat').orderBy('at', 'desc').limit(40).onSnapshot(s => cb(s.docs.map(d => ({ id: d.id, ...d.data() })).reverse()), () => {}); },
   stopChat() { if (this.unsub) { this.unsub(); this.unsub = null; } },
   async say(text) { text = cleanText(text).slice(0, 160); if (!text) return; await this.db.collection('guilds/' + this.guild.id + '/chat').add({ uid: this.uid, name: SAVE.profile.name.slice(0, 16), text, at: this.ts() }); },
+  // Google Play requires in-app account deletion: remove every document tied to this player, then the account itself
+  async deleteAccount() {
+    const db = this.db, uid = this.uid;
+    if (this.guild) { try { await this.leaveGuild(); } catch (e) {} }
+    const del = async path => { try { await db.doc(path).delete(); } catch (e) {} };
+    if (this.realmId) { await del('realms/' + this.realmId + '/scores/' + uid); try { await del('realms/' + this.realmId + '/boss/' + isoWeek() + '/hits/' + uid); } catch (e) {} }
+    await del('saves/' + uid); await del('players/' + uid);
+    try { await this.fb.auth().currentUser.delete(); } catch (e) { await this.fb.auth().signOut(); }
+    this.state = 'off'; this.uid = null; this.realm = null; this.guild = null;
+  },
   async report(msg) { await this.db.collection('reports').add({ by: this.uid, target: msg.uid, text: msg.text, guild: this.guild ? this.guild.id : '', at: this.ts() }); },
 };
 /* ---------------- Realm window ---------------- */
@@ -4462,7 +4472,15 @@ async function realmAcct(el) {
     <div class="row setrow">${SAVE.linked ? '' : '<button class="btn" id="tMake">Create transfer code</button>'}</div>
     <div class="ph">Use a transfer code</div>
     <div class="gcreate"><input id="tCode" placeholder="Code (ABCD-1234)" maxlength="9" autocomplete="off"><input id="tPass" placeholder="Password" maxlength="10" autocomplete="off"><button class="btn ghost" id="tUse">Restore</button></div>
-    <p class="muted" style="font-size:13px">Restoring replaces the progress on this device with the saved progress.</p>`;
+    <p class="muted" style="font-size:13px">Restoring replaces the progress on this device with the saved progress.</p>
+    <div class="ph">Delete account</div>
+    <p class="muted" style="font-size:14px">Permanently deletes your online account, cloud save, leaderboard records and guild membership, and erases progress on this device.</p>
+    <button class="btn ghost pquit" id="tDel">Delete my account</button>`;
+  const dl = el.querySelector('#tDel');
+  dl.onclick = () => openModal(`<h2>Delete your account?</h2><p class="muted">This removes your cloud save, realm records, world boss damage and guild membership, then erases all progress on this device. It cannot be undone.</p><div class="row"><button class="btn ghost danger" id="mDelYes">Delete everything</button><button class="btn ghost" id="mDelNo">Keep my account</button></div>`, m => {
+    m.querySelector('#mDelNo').onclick = () => openRealm('acct');
+    m.querySelector('#mDelYes').onclick = async () => { m.querySelector('#mDelYes').disabled = true; try { await Online.deleteAccount(); } catch (e) {} SAVE = DEFAULT_SAVE(); migrateSave(); store.set(SAVE_KEY, SAVE); closeModal(); renderHub(); toast('Your account and progress were deleted.'); setTimeout(() => Online.init(), 1500); };
+  });
   const mk = el.querySelector('#tMake');
   if (mk) mk.onclick = async () => { mk.disabled = true; try { const r = await Online.makeTransfer(); openModal(`<div class="mribbon">Transfer code</div><p class="muted" style="text-align:center">Write these down and keep them private. Anyone with them can take your progress.</p><div class="acct-stats"><div><b>${r.code}</b><span>Code</span></div><div><b>${r.pass}</b><span>Password</span></div></div><div class="row"><button class="btn" id="mClose">I wrote them down</button></div>`, m => { m.querySelector('#mClose').onclick = closeModal; }); } catch (e) { toast('Could not create a code: ' + e.message); mk.disabled = false; } };
   el.querySelector('#tUse').onclick = async () => { const c = $('tCode').value, p = $('tPass').value; if (!c || !p) return; try { await Online.useTransfer(c, p); toast('Progress restored.'); closeModal(); renderHub(); } catch (e) { toast('That code and password did not match.'); } };
