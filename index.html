@@ -1127,7 +1127,7 @@ const SND = {
       const len = this.ctx.sampleRate; const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
       const data = buf.getChannelData(0); for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
       this.noiseBuf = buf;
-      this.drone();
+      setTimeout(() => Music.play(Music.want || (state === 'play' ? 'battle' : 'menu')), 50);
     } catch (e) { this.ctx = null; }
   },
   setMuted(m) { this.muted = m; store.set('av_muted', m); if (this.master) this.master.gain.setTargetAtTime(m ? 0 : 0.55, this.ctx.currentTime, 0.05); },
@@ -1177,6 +1177,84 @@ const SND = {
   parry() { if (!this.ctx) return; this.tone(1600, 0.25, 'square', 0.05, 0.5); this.tone(2400, 0.45, 'triangle', 0.08, 1.2); this.noise(0.12, 5000, 0.12, 'highpass'); },
   glint() { if (this.ok('glint', 150)) { this.tone(1800, 0.25, 'sine', 0.09, 1.6); this.tone(2700, 0.2, 'sine', 0.05, 1.3, 0.05); } },
   chest() { if (!this.ctx) return; [392, 493.9, 587.3, 784].forEach((f, i) => this.tone(f, 1.6, 'sine', 0.07, 0, i * 0.12)); },
+};
+/* ---------------- Music: three original themes, synthesised live ---------------- */
+const NOTE = m => 440 * Math.pow(2, (m - 69) / 12);
+// chords as [root midi, quality]; m = minor, M = major, d = diminished, 7 = dominant
+const CH = { m: [0, 3, 7], M: [0, 4, 7], d: [0, 3, 6], 7: [0, 4, 7, 10] };
+const TRACKS = {
+  menu: { bpm: 66, bars: [[50, 'm'], [46, 'M'], [43, 'm'], [45, 'M']], drums: 0, arp: 0, bass: 1, choir: 1, bell: 1, lead: [74, -1, 72, 70, 69, -1, -1, -1, 70, -1, 69, 67, 69, -1, -1, -1] },
+  battle: { bpm: 118, bars: [[45, 'm'], [41, 'M'], [43, 'M'], [40, 'm']], drums: 1, arp: 1, bass: 2, choir: 0, bell: 0, lead: null },
+  horde: { bpm: 128, bars: [[45, 'm'], [41, 'M'], [43, 'M'], [44, 'M']], drums: 2, arp: 1, bass: 2, choir: 1, bell: 0, lead: null },
+  boss: { bpm: 138, bars: [[40, 'm'], [36, 'M'], [38, 'M'], [35, '7']], drums: 3, arp: 2, bass: 3, choir: 1, bell: 1, lead: [64, -1, 67, -1, 71, -1, 72, 71, 69, -1, 67, -1, 66, -1, 64, -1] },
+};
+const Music = {
+  on: store.get('av_music', true), cur: null, bus: null, verb: null, timer: 0, step: 0, next: 0, track: null, duck: 1,
+  setup() {
+    const C = SND.ctx; if (!C || this.bus) return !!this.bus;
+    this.bus = C.createGain(); this.bus.gain.value = 0; this.bus.connect(SND.master);
+    // generated hall reverb
+    const len = C.sampleRate * 2.6, ir = C.createBuffer(2, len, C.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+    this.verb = C.createConvolver(); this.verb.buffer = ir;
+    this.wet = C.createGain(); this.wet.gain.value = 0.32; this.verb.connect(this.wet); this.wet.connect(this.bus);
+    this.dry = C.createGain(); this.dry.gain.value = 0.8; this.dry.connect(this.bus);
+    return true;
+  },
+  setOn(v) { this.on = v; store.set('av_music', v); if (!v) this.stop(); else if (this.want) this.play(this.want, true); },
+  play(name, force) {
+    this.want = name;
+    if (!this.on || !SND.ctx || (this.cur === name && !force)) return;
+    if (!this.setup()) return;
+    const C = SND.ctx, t = C.currentTime;
+    this.cur = name; this.track = TRACKS[name]; this.step = 0; this.next = t + 0.1;
+    this.bus.gain.cancelScheduledValues(t); this.bus.gain.setValueAtTime(this.bus.gain.value, t);
+    this.bus.gain.linearRampToValueAtTime(0, t + 0.35); this.bus.gain.linearRampToValueAtTime(0.5 * this.duck, t + 1.6);
+    this.next = t + 0.4;
+    if (!this.timer) this.timer = setInterval(() => this.tick(), 50);
+  },
+  stop() { this.cur = null; if (this.bus && SND.ctx) { const t = SND.ctx.currentTime; this.bus.gain.cancelScheduledValues(t); this.bus.gain.setTargetAtTime(0, t, 0.3); } clearInterval(this.timer); this.timer = 0; },
+  setDuck(k) { this.duck = k; if (this.bus && this.cur && SND.ctx) this.bus.gain.setTargetAtTime(0.5 * k, SND.ctx.currentTime, 0.3); },
+  tick() {
+    const C = SND.ctx; if (!C || !this.track) return;
+    const spb = 60 / this.track.bpm / 4;
+    while (this.next < C.currentTime + 0.25) { this.playStep(this.step, this.next, spb); this.step++; this.next += spb; }
+  },
+  osc(type, f, t, dur, vol, out, o) {
+    const C = SND.ctx, g = C.createGain(), s = C.createOscillator(); s.type = type; s.frequency.setValueAtTime(f, t);
+    if (o && o.det) s.detune.value = o.det; if (o && o.slide) s.frequency.exponentialRampToValueAtTime(Math.max(20, f * o.slide), t + dur);
+    const a = o && o.a || 0.005, r = o && o.r || dur;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + a); g.gain.setTargetAtTime(0.0001, t + Math.max(a, dur - r * 0.3), r / 3);
+    let node = s; if (o && o.lp) { const f2 = C.createBiquadFilter(); f2.type = 'lowpass'; f2.frequency.value = o.lp; f2.Q.value = o.q || 0.7; s.connect(f2); node = f2; }
+    node.connect(g); g.connect(out || this.dry); if (o && o.verb) g.connect(this.verb);
+    s.start(t); s.stop(t + dur + r + 0.1);
+  },
+  noise(t, dur, vol, type, freq, verb) {
+    const C = SND.ctx, s = C.createBufferSource(), f = C.createBiquadFilter(), g = C.createGain(); s.buffer = SND.noiseBuf; f.type = type; f.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); s.connect(f); f.connect(g); g.connect(this.dry); if (verb) g.connect(this.verb);
+    s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
+  },
+  playStep(st, t, spb) {
+    const T = this.track, bar = Math.floor(st / 16) % T.bars.length, s = st % 16, [root, q] = T.bars[bar], tones = CH[q].map(i => root + i);
+    // pad: sustained chord each bar (strings / organ)
+    if (s === 0) for (const n of tones.slice(0, 3)) for (const det of [-7, 7]) this.osc('sawtooth', NOTE(n + 12), t, spb * 16, T.drums ? 0.022 : 0.034, null, { det, a: 0.5, r: 1.2, lp: T.drums ? 1400 : 900, verb: 1 });
+    // choir: soft vowel-like triangles on chord tones
+    if (T.choir && s === 0) for (const n of tones.slice(0, 3)) this.osc('triangle', NOTE(n + 24), t, spb * 16, T.drums ? 0.02 : 0.034, null, { det: 4, a: 0.9, r: 1.5, lp: 1100, verb: 1 });
+    // bass
+    if (T.bass === 1 && s === 0) this.osc('triangle', NOTE(root - 12), t, spb * 16, 0.12, null, { a: 0.3, r: 1, lp: 400 });
+    if (T.bass >= 2 && (T.bass === 3 ? s % 2 === 0 : s % 4 === 0 || s % 4 === 3)) this.osc('sawtooth', NOTE(root - 12 + (s === 14 && T.bass === 3 ? 7 : 0)), t, spb * 1.6, 0.09, null, { a: 0.005, r: 0.12, lp: T.bass === 3 ? 650 : 480, q: 2 });
+    // arpeggio
+    if (T.arp && s % (T.arp === 2 ? 1 : 2) === 0) { const n = tones[(s / (T.arp === 2 ? 1 : 2)) % tones.length] + 24 + (s >= 8 && T.arp === 2 ? 12 : 0); this.osc('triangle', NOTE(n), t, spb * 1.4, 0.05, null, { r: 0.15, verb: 1 }); }
+    // lead melody (menu bells, boss horns)
+    if (T.lead) { const n = T.lead[s]; if (n > 0 && (bar % 2 === 0 || this.cur === 'boss')) { if (this.cur === 'menu') for (const [m, v] of [[1, 1], [2.02, 0.4], [3.01, 0.2]]) this.osc('sine', NOTE(n) * m, t, spb * 6, 0.09 * v, null, { r: 1.4, verb: 1 }); else this.osc('sawtooth', NOTE(n), t, spb * 1.8, 0.05, null, { a: 0.03, r: 0.2, lp: 1800, verb: 1 }); } }
+    if (T.bell && s === 0 && bar === 0) for (const [m, v] of [[1, 1], [2.02, 0.5], [2.74, 0.35], [4.1, 0.2]]) this.osc('sine', NOTE(root + 24) * m, t, 3, 0.05 * v, null, { r: 2.4, verb: 1 });
+    // drums
+    const D = T.drums; if (!D) return;
+    if (s === 0 || s === 8 || (D >= 2 && (s === 6 || s === 14)) || (D === 3 && s % 4 === 0)) { this.osc('sine', 110, t, 0.35, 0.5, null, { slide: 0.35, r: 0.25 }); this.noise(t, 0.08, 0.12, 'lowpass', 900); }
+    if (D >= 2 ? (s === 4 || s === 12) : s === 12) this.noise(t, 0.18, D >= 2 ? 0.22 : 0.12, 'bandpass', 1900, 1);
+    if (s % 2 === 1 || (D === 3 && s % 1 === 0)) this.noise(t, 0.04, D === 3 ? 0.05 : 0.035, 'highpass', 7000);
+    if (D >= 2 && s === 15 && bar === T.bars.length - 1) for (let k = 0; k < 4; k++) this.osc('sine', 160 - k * 25, t + k * spb / 2, 0.25, 0.3, null, { slide: 0.5, r: 0.2 });
+  },
 };
 
 /* ---------------- Canvas ---------------- */
@@ -2177,6 +2255,7 @@ function director(dt) {
   }
 }
 function startHorde() {
+  Music.play('horde');
   G.horde = { t: 0, next: 0.4, dur: HORDE_DUR };
   banner('The horde covets your light', 'Hold the flame. Survive the onslaught.', 3.2);
   SND.bell(58, 0.3); G.cam.shake = Math.min(16, G.cam.shake + 8); G.flash = Math.max(G.flash, 0.25);
@@ -2192,7 +2271,7 @@ function hordeUpdate(dt) {
     }
   }
   if (h.t >= h.dur) {
-    G.horde = null; G.hordesBroken++;
+    G.horde = null; G.hordesBroken++; Music.play(G.boss ? 'boss' : 'battle');
     banner('The horde breaks', 'Your light endures. Claim the reliquary.', 2.8);
     const a = Math.random() * TAU; G.chests.push({ x: P.x + Math.cos(a) * 90, y: P.y + Math.sin(a) * 90, t: 0 });
     G.gold += 120 * G.goldMul; floatText(P.x, P.y - 40, '+' + Math.round(120 * G.goldMul) + ' gold', '#e8c779', true);
@@ -2200,6 +2279,7 @@ function hordeUpdate(dt) {
   }
 }
 function spawnBoss(i) {
+  Music.play('boss');
   const b = BOSSES[i]; const [x, y] = spawnPoint();
   const st = STAGES[G.stage], bhp = b.hp * st.hp * 1.15 * 0.85; // bosses arrive earlier in 10-minute runs
   const e = { type: 'boss', def: b, name: st.bosses[i], boss: true, x, y, r: b.r, hp: bhp, maxHp: bhp, spd: b.spd, dmg: b.dmg * st.dmg * 1.25, xp: 0, mass: 50, posture: 0, broken: 0, stun: 0,
@@ -2208,6 +2288,7 @@ function spawnBoss(i) {
   banner(e.name, b.sub, 3.5); SND.bell(i === 2 ? 49 : 65, 0.35);
 }
 function onBossDeath(e) {
+  Music.play(G.horde ? 'horde' : 'battle');
   if (G.mode) { dunBossDeath(e); return; }
   G.boss = null; G.bossesKilled++; G.sigils += 3; G.gold += 150 * G.goldMul;
   for (let i = 0; i < 30; i++) { const a = Math.random() * TAU, r = Math.random() * 60; dropGem(e.x + Math.cos(a) * r, e.y + Math.sin(a) * r, 5); }
@@ -2702,6 +2783,7 @@ function buildList() {
   return parts.join('');
 }
 function startRun() {
+  Music.setDuck(1); setTimeout(() => Music.play('battle'), 0);
   SND.init();
   if (!SAVE.origins.includes(SAVE.cls)) SAVE.cls = 'knight';
   TUTS.moved = 0; TUTS.rolled = false; TUTS.drank = false; TUTS.parried = false; TUTS.tried = false; TUTS.cur = null;
@@ -2712,6 +2794,7 @@ function startRun() {
   banner(STAGES[G.stage].name, G.hard ? 'Hard mode. No flask will be refilled.' : 'Survive. Three bells will toll.', 2.6);
 }
 function endRun(won) {
+  Music.play('menu');
   if (G.mode) { finishDungeon(false); return; }
   $('againBtn').hidden = false; $('menuBtn').textContent = 'Return to hub';
   state = won ? 'win' : 'dead'; hideCoach();
@@ -2751,6 +2834,8 @@ $('adDoubleBtn').addEventListener('click', async () => {
 });
 function togglePause() {
   if (state === 'play') $('coach').hidden = true;
+  if (state === 'play') { Music.setDuck(0.35); }
+  else if (state === 'pause') { Music.setDuck(1); }
   if (state === 'play') { state = 'pause'; renderPause(); $('pauseScreen').hidden = false; if (!isTouch) $('resumeBtn').focus({ preventScroll: true }); }
   else if (state === 'pause') { state = 'play'; $('pauseScreen').hidden = true; }
 }
@@ -4066,6 +4151,7 @@ function dunType() {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 function startDungeon(id, tier) {
+  Music.setDuck(1); setTimeout(() => Music.play('battle'), 0);
   const d = DUN[id]; SND.init();
   if (!SAVE.origins.includes(SAVE.cls)) SAVE.cls = 'knight';
   TUTS.moved = 0; TUTS.rolled = false; TUTS.drank = false; TUTS.parried = false; TUTS.tried = false; TUTS.cur = null;
@@ -4082,6 +4168,7 @@ function startDungeon(id, tier) {
   banner(d.name + ' · Tier ' + tier, d.goal, 2.6);
 }
 function dunBoss(i, name, hpk) {
+  Music.play('boss');
   const b = BOSSES[i], [x, y] = spawnPoint(), bhp = b.hp * G.dun.hp * hpk;
   const e = { type: 'boss', def: b, name, boss: true, x, y, r: b.r, hp: bhp, maxHp: bhp, spd: b.spd, dmg: b.dmg * G.dun.dmg * 1.1, xp: 0, mass: 50, posture: 0, broken: 0, stun: 0,
     flash: 0, kbx: 0, kby: 0, vx: 0, vy: 0, t: 0, slow: 0, phase: 'walk', atkT: 3, ct: 0, cang: 0, spiral: 0, spA: 0, spT: 0 };
@@ -4154,6 +4241,7 @@ function dunDirector(dt) {
   }
 }
 function finishDungeon(won) {
+  Music.play('menu');
   const D = G.dun; if (D.done) return; D.done = true;
   if (D.lost) won = false;
   state = won ? 'win' : 'dead'; hideCoach(); if (won) SND.chest(); else SND.death();
@@ -4781,7 +4869,7 @@ function openModal(html, bind, wide) { $('modalBody').className = 'sheet' + (wid
 function closeModal() { $('modal').hidden = true; $('modalBody').innerHTML = ''; }
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
 
-function showHub(tab) { state = 'title'; if (tab) hubTab = tab; $('hub').hidden = false; renderHub(); hubTutorial(); if (SAVE.refundNote) { toast('The Altar became a talent path. ' + fmtNum(SAVE.refundNote) + ' gold refunded.'); delete SAVE.refundNote; persist(); } }
+function showHub(tab) { state = 'title'; Music.setDuck(1); Music.play('menu'); if (tab) hubTab = tab; $('hub').hidden = false; renderHub(); hubTutorial(); if (SAVE.refundNote) { toast('The Altar became a talent path. ' + fmtNum(SAVE.refundNote) + ' gold refunded.'); delete SAVE.refundNote; persist(); } }
 function renderHub() {
   $('goldAmt').textContent = fmtNum(SAVE.gold); $('sigilAmt').textContent = fmtNum(SAVE.sigils);
   renderAccountBtn();
@@ -5018,6 +5106,8 @@ function openSettings(confirmErase) {
     <div class="seg" role="group" aria-label="Camera zoom">${[['near', 'Close'], ['normal', 'Normal'], ['far', 'Far']].map(([k, l]) => `<button data-z="${k}" aria-pressed="${z === k}">${l}</button>`).join('')}</div>
     <div class="eyebrow">Sound</div>
     <div class="seg two" role="group" aria-label="Sound"><button data-s="on" aria-pressed="${!SND.muted}">On</button><button data-s="off" aria-pressed="${SND.muted}">Off</button></div>
+    <div class="eyebrow">Music</div>
+    <div class="seg two" role="group" aria-label="Music"><button data-mu="on" aria-pressed="${Music.on}">On</button><button data-mu="off" aria-pressed="${!Music.on}">Off</button></div>
     <div class="eyebrow">Controls</div><p class="muted" style="margin:0;font-size:15px">Move with WASD, the arrow keys or by dragging. Roll with Space, Shift or a right-click. Parry with F, J or a left-click. Drink a flask with Q or E. Pause with Esc, toggle sound with M. Controllers work too: left stick moves, A rolls, B parries, Y drinks, Start pauses.</p>
     ${!Platform.native ? `<div class="eyebrow">This browser</div><div class="row setrow">${canFullscreen() ? '<button class="btn ghost" id="mFull">Fullscreen</button>' : ''}${installPrompt ? '<button class="btn ghost" id="mInstall">Install as app</button>' : ''}<button class="btn ghost" id="mExport">Back up save</button><button class="btn ghost" id="mImport">Restore save</button></div><p class="muted" style="margin:0;font-size:13px">Progress is stored in this browser. Back it up before clearing site data or switching devices.</p>` : ''}
     <div class="eyebrow">Privacy</div><div class="row setrow"><a class="btn ghost" href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy policy</a><a class="btn ghost" href="${TERMS_URL}" target="_blank" rel="noopener">Terms of service</a>${Platform.privacyOpt ? '<button class="btn ghost" id="mAdPriv">Ad privacy choices</button>' : ''}</div>
@@ -5025,6 +5115,7 @@ function openSettings(confirmErase) {
       <div class="row"><button class="btn ghost danger" id="mErase2">Erase everything</button><button class="btn ghost" id="mKeep">Keep my progress</button></div>`
       : `<div class="row"><button class="btn" id="mClose" style="padding:12px 24px;font-size:14px">Done</button><button class="btn ghost danger" id="mErase">Erase progress</button></div>`}`, m => {
     m.querySelectorAll('[data-z]').forEach(b => b.onclick = () => { SAVE.settings.zoom = b.dataset.z; zoomPref = ZOOM_PREFS[b.dataset.z]; resize(); persist(); openSettings(false); });
+    m.querySelectorAll('[data-mu]').forEach(b => b.onclick = () => { SND.init(); Music.setOn(b.dataset.mu === 'on'); openSettings(false); });
     m.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { SND.init(); SND.setMuted(b.dataset.s === 'off'); $('muteBtn').textContent = SND.muted ? 'OFF' : 'SND'; openSettings(false); });
     if (confirmErase) { m.querySelector('#mKeep').onclick = () => openSettings(false); m.querySelector('#mErase2').onclick = () => { SAVE = DEFAULT_SAVE(); migrateSave(); closeModal(); renderHub(); toast('Progress erased.'); }; }
     else { m.querySelector('#mClose').onclick = closeModal; m.querySelector('#mErase').onclick = () => openSettings(true); }
