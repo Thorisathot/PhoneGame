@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
@@ -58,7 +58,7 @@ jobs:
           export BUILD_NUMBER=$((1000 + BUILD_NUMBER))
           cd android && chmod +x gradlew && ./gradlew bundleRelease --no-daemon
           rm -f "$RUNNER_TEMP/upload.keystore"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ashen-vigil-release-${{ github.run_number }}
           path: android/app/build/outputs/bundle/release/app-release.aab
