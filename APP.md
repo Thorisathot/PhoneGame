@@ -86,3 +86,22 @@ Test builds are signed with `android/test-signing.keystore`. This key is committ
 See `LAUNCH.md` for the full checklist. Release bundles are built by `.github/workflows/android-release.yml` (Actions > Android release > Run workflow). It signs with your private upload key from the repository secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`, and reads your real AdMob app id from the repository variable `ADMOB_APP_ID`. The test-only key in `android/test-signing.keystore` is never used for releases. The package name is `com.thorisathot.ashenvigil`.
 
 The game asks EEA and UK players for ad consent through Google's UMP message (create it in AdMob > Privacy & messaging), and Settings links to the privacy policy at `https://thorisathot.github.io/PhoneGame/privacy.html`.
+
+## VIP
+
+Every purchase adds VIP points, set per product in `VIP_PTS` in `index.html` (about 100 points per US$1, so the result is the same in every currency). Each daily login reward adds 5 points, so players who never pay reach VIP 1 in about three weeks. Levels never expire.
+
+| VIP | Points | Perks (they stack) | One-time gift |
+|---|---|---|---|
+| 1 | 100 | +5% run gold, daily VIP chest, badge on realm ranks | 2,000 gold, 20 sigils |
+| 2 | 500 | +10 armory space | 50 sigils, Iron Reliquary |
+| 3 | 1,000 | +10% gold, +1 dungeon entry a day | 80 sigils, 2 Iron |
+| 4 | 2,500 | +20 space, free chest every 3h | 120 sigils, Ember Ark |
+| 5 | 5,000 | +15% gold, +1 world boss attack | **Legendary Sovereign Wings** (VIP only), 150 sigils |
+| 6 | 10,000 | +30 space | 250 sigils, 2 Ember |
+| 7 | 15,000 | +20% gold, +2 dungeon entries | 300 sigils, 2 Ember, 3 Iron |
+| 8 | 25,000 | +40 space, free chest every 2h, Iron in the daily chest | **Legendary Crowned Gryphling** (VIP only), 300 sigils |
+| 9 | 35,000 | +25% gold | 500 sigils, 3 Ember |
+| 10 | 50,000 | +30% gold, +50 space | 800 sigils, 5 Ember |
+
+The daily VIP chest gives 250 gold and 3 sigils per VIP level. VIP badges on realm ranks need the updated `firestore.rules` (the `vip` field); until the rules are republished, scores are saved without the badge.
